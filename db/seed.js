@@ -1,8 +1,7 @@
 const { getDb, initDatabase } = require('./database');
 const bcrypt = require('bcryptjs');
 
-function seed() {
-  initDatabase();
+function seedDatabase() {
   const db = getDb();
 
   // Create admin user (username: admin, password: urbanhilt2024)
@@ -228,10 +227,12 @@ function seed() {
   });
 
   console.log(`  ✓ ${products.length} products seeded`);
-  console.log('\n  🎉 Database seeded successfully!\n');
-  console.log('  Admin Login:');
-  console.log('  Username: admin');
-  console.log('  Password: urbanhilt2024\n');
+  console.log('  ✓ Database seeded (admin / urbanhilt2024)');
 }
 
-seed();
+module.exports = { seedDatabase };
+
+if (require.main === module) {
+  initDatabase();
+  seedDatabase();
+}
