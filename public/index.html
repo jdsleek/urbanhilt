@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URBAN HILT — Luxury Redefined</title>
+  <meta name="description" content="Urban Hilt Luxury Wears - Premium clothing, shoes & accessories. Elegance meets street culture.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Preloader -->
+  <div id="preloader">
+    <div class="preloader-inner">
+      <div class="preloader-logo">URBAN HILT</div>
+      <div class="preloader-bar"><div class="preloader-progress"></div></div>
+    </div>
+  </div>
+
+  <!-- Announcement Bar -->
+  <div class="announcement-bar">
+    <div class="announcement-slider">
+      <span>FREE SHIPPING ON ORDERS OVER ₦50,000</span>
+      <span>NEW COLLECTION JUST DROPPED — SHOP NOW</span>
+      <span>USE CODE <strong>URBANHILT10</strong> FOR 10% OFF YOUR FIRST ORDER</span>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <a href="/" class="nav-logo">
+        <span class="logo-text">URBAN HILT</span>
+      </a>
+      <div class="nav-menu" id="navMenu">
+        <div class="nav-menu-inner">
+          <a href="/" class="nav-link active">Home</a>
+          <a href="/shop.html" class="nav-link">Shop</a>
+          <div class="nav-dropdown">
+            <a href="#" class="nav-link nav-dropdown-trigger">Categories <i class="fas fa-chevron-down"></i></a>
+            <div class="nav-dropdown-menu" id="navCategories"></div>
+          </div>
+          <a href="/shop.html?filter=new" class="nav-link">New Arrivals</a>
+          <a href="/contact.html" class="nav-link">Contact</a>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <button class="nav-action-btn" id="searchToggle" aria-label="Search"><i class="fas fa-search"></i></button>
+        <a href="/cart.html" class="nav-action-btn cart-btn" aria-label="Cart">
+          <i class="fas fa-shopping-bag"></i>
+          <span class="cart-count" id="cartCount">0</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Search Overlay -->
+  <div class="search-overlay" id="searchOverlay">
+    <div class="search-overlay-inner">
+      <button class="search-close" id="searchClose"><i class="fas fa-times"></i></button>
+      <h2 class="search-title">What are you looking for?</h2>
+      <div class="search-input-wrap">
+        <input type="text" id="searchInput" placeholder="Search products..." autocomplete="off">
+        <i class="fas fa-search"></i>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="hero-gradient"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-badge" data-aos="fade-down">LUXURY REDEFINED</div>
+      <h1 class="hero-title" data-aos="fade-up">
+        <span class="hero-title-line">Elevate Your</span>
+        <span class="hero-title-line hero-title-italic">Style</span>
+      </h1>
+      <p class="hero-subtitle" data-aos="fade-up" data-aos-delay="200">
+        Premium clothing & footwear curated for those who dare to stand out. 
+        Where elegance meets urban culture.
+      </p>
+      <div class="hero-actions" data-aos="fade-up" data-aos-delay="400">
+        <a href="/shop.html" class="btn btn-primary btn-lg">Shop Collection</a>
+        <a href="/shop.html?filter=new" class="btn btn-outline btn-lg">New Arrivals</a>
+      </div>
+    </div>
+    <div class="hero-scroll-indicator">
+      <span>Scroll to explore</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- Marquee -->
+  <div class="marquee-section">
+    <div class="marquee-track">
+      <span>LUXURY WEARS</span><span class="marquee-dot">◆</span>
+      <span>PREMIUM SHOES</span><span class="marquee-dot">◆</span>
+      <span>URBAN STYLE</span><span class="marquee-dot">◆</span>
+      <span>BOLD FASHION</span><span class="marquee-dot">◆</span>
+      <span>LUXURY WEARS</span><span class="marquee-dot">◆</span>
+      <span>PREMIUM SHOES</span><span class="marquee-dot">◆</span>
+      <span>URBAN STYLE</span><span class="marquee-dot">◆</span>
+      <span>BOLD FASHION</span><span class="marquee-dot">◆</span>
+    </div>
+  </div>
+
+  <!-- Categories Section -->
+  <section class="section categories-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Explore</span>
+        <h2 class="section-title">Shop by Category</h2>
+        <p class="section-subtitle">Find exactly what you're looking for</p>
+      </div>
+      <div class="categories-grid" id="categoriesGrid"></div>
+    </div>
+  </section>
+
+  <!-- Featured Products -->
+  <section class="section featured-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Curated for You</span>
+        <h2 class="section-title">Featured Collection</h2>
+        <p class="section-subtitle">Handpicked pieces that define luxury</p>
+      </div>
+      <div class="products-grid" id="featuredProducts"></div>
+      <div class="section-cta">
+        <a href="/shop.html" class="btn btn-dark btn-lg">View All Products</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Parallax Banner -->
+  <section class="parallax-banner">
+    <div class="parallax-overlay"></div>
+    <div class="parallax-content">
+      <span class="parallax-tag">New Season</span>
+      <h2 class="parallax-title">The Art of<br><em>Dressing Well</em></h2>
+      <p class="parallax-text">Discover our latest arrivals — crafted for the bold, the elegant, and the extraordinary.</p>
+      <a href="/shop.html?filter=new" class="btn btn-white btn-lg">Explore New Arrivals</a>
+    </div>
+  </section>
+
+  <!-- New Arrivals -->
+  <section class="section new-arrivals-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Just Dropped</span>
+        <h2 class="section-title">New Arrivals</h2>
+        <p class="section-subtitle">Be the first to own the latest trends</p>
+      </div>
+      <div class="products-grid" id="newArrivals"></div>
+    </div>
+  </section>
+
+  <!-- Brand Values -->
+  <section class="section values-section">
+    <div class="container">
+      <div class="values-grid">
+        <div class="value-card">
+          <div class="value-icon"><i class="fas fa-gem"></i></div>
+          <h3>Premium Quality</h3>
+          <p>Every piece is carefully selected for superior craftsmanship and materials</p>
+        </div>
+        <div class="value-card">
+          <div class="value-icon"><i class="fas fa-truck"></i></div>
+          <h3>Fast Delivery</h3>
+          <p>Swift nationwide delivery to your doorstep within 2-5 business days</p>
+        </div>
+        <div class="value-card">
+          <div class="value-icon"><i class="fas fa-shield-alt"></i></div>
+          <h3>Secure Shopping</h3>
+          <p>100% secure checkout and hassle-free return policy guaranteed</p>
+        </div>
+        <div class="value-card">
+          <div class="value-icon"><i class="fas fa-headset"></i></div>
+          <h3>24/7 Support</h3>
+          <p>Our team is always available to assist you with any questions</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Best Sellers -->
+  <section class="section bestsellers-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Most Loved</span>
+        <h2 class="section-title">Best Sellers</h2>
+        <p class="section-subtitle">Our customers' top picks</p>
+      </div>
+      <div class="products-grid" id="bestSellers"></div>
+    </div>
+  </section>
+
+  <!-- Newsletter -->
+  <section class="newsletter-section">
+    <div class="container">
+      <div class="newsletter-inner">
+        <div class="newsletter-content">
+          <span class="section-tag">Stay Connected</span>
+          <h2 class="newsletter-title">Join the Urban Hilt Family</h2>
+          <p class="newsletter-text">Subscribe for exclusive drops, special offers, and style inspiration.</p>
+          <form class="newsletter-form" id="newsletterForm">
+            <div class="newsletter-input-group">
+              <input type="email" placeholder="Enter your email address" required id="newsletterEmail">
+              <button type="submit" class="btn btn-primary">Subscribe</button>
+            </div>
+            <p class="newsletter-disclaimer">By subscribing, you agree to our Privacy Policy. Unsubscribe anytime.</p>
+          </form>
+          <div class="newsletter-message" id="newsletterMessage"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Instagram Section -->
+  <section class="section instagram-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">@urban_hilt</span>
+        <h2 class="section-title">Follow Us on Instagram</h2>
+        <p class="section-subtitle">Join our community of fashion lovers</p>
+      </div>
+      <div class="social-links-grid">
+        <a href="https://www.tiktok.com/@urbanhiltluxurywears" target="_blank" class="social-card">
+          <i class="fab fa-tiktok"></i>
+          <span>TikTok</span>
+          <small>@urbanhiltluxurywears</small>
+        </a>
+        <a href="https://www.instagram.com/urban_hilt" target="_blank" class="social-card">
+          <i class="fab fa-instagram"></i>
+          <span>Instagram</span>
+          <small>@urban_hilt</small>
+        </a>
+        <a href="https://wa.me/2348146747883" target="_blank" class="social-card">
+          <i class="fab fa-whatsapp"></i>
+          <span>WhatsApp</span>
+          <small>+234 814 674 7883</small>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col footer-brand">
+          <h3 class="footer-logo">URBAN HILT</h3>
+          <p class="footer-tagline">Luxury Redefined</p>
+          <p class="footer-desc">Premium clothing and footwear for those who appreciate the finer things in life. Based in Lagos, shipping nationwide.</p>
+          <div class="footer-socials">
+            <a href="https://www.tiktok.com/@urbanhiltluxurywears" target="_blank"><i class="fab fa-tiktok"></i></a>
+            <a href="https://www.instagram.com/urban_hilt" target="_blank"><i class="fab fa-instagram"></i></a>
+            <a href="https://wa.me/2348146747883" target="_blank"><i class="fab fa-whatsapp"></i></a>
+            <a href="mailto:urbanhiltltd@gmail.com"><i class="fas fa-envelope"></i></a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="/shop.html">Shop All</a></li>
+            <li><a href="/shop.html?filter=new">New Arrivals</a></li>
+            <li><a href="/shop.html?filter=sale">Sale</a></li>
+            <li><a href="/contact.html">Contact Us</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Customer Care</h4>
+          <ul>
+            <li><a href="/contact.html">Help & FAQs</a></li>
+            <li><a href="/contact.html">Shipping Info</a></li>
+            <li><a href="/contact.html">Returns & Exchange</a></li>
+            <li><a href="/contact.html">Size Guide</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Get in Touch</h4>
+          <ul class="footer-contact">
+            <li><i class="fas fa-map-marker-alt"></i> 134/136 Broad Street, Lagos</li>
+            <li><i class="fas fa-phone"></i> <a href="tel:+2348146747883">+234 814 674 7883</a></li>
+            <li><i class="fab fa-whatsapp"></i> <a href="https://wa.me/2348146747883">WhatsApp Us</a></li>
+            <li><i class="fas fa-envelope"></i> <a href="mailto:urbanhiltltd@gmail.com">urbanhiltltd@gmail.com</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Urban Hilt Ltd. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+        <div class="footer-payments">
+          <span>We Accept:</span>
+          <i class="fas fa-money-bill-wave"></i>
+          <span>Bank Transfer</span>
+          <span>•</span>
+          <span>Pay on Delivery</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- WhatsApp Float -->
+  <a href="https://wa.me/2348146747883?text=Hello%20Urban%20Hilt!%20I'm%20interested%20in%20your%20products." class="whatsapp-float" target="_blank" aria-label="Chat on WhatsApp">
+    <i class="fab fa-whatsapp"></i>
+  </a>
+
+  <!-- Back to Top -->
+  <button class="back-to-top" id="backToTop" aria-label="Back to top">
+    <i class="fas fa-arrow-up"></i>
+  </button>
+
+  <script src="/js/main.js"></script>
+  <script src="/js/home.js"></script>
+</body>
+</html>

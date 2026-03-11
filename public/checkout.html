@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout — URBAN HILT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar navbar-light navbar-checkout" id="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-logo"><span class="logo-text">URBAN HILT</span></a>
+      <div class="checkout-steps">
+        <span class="step active" data-step="1">1. Information</span>
+        <span class="step-divider"></span>
+        <span class="step" data-step="2">2. Review</span>
+        <span class="step-divider"></span>
+        <span class="step" data-step="3">3. Confirmation</span>
+      </div>
+      <a href="/cart.html" class="nav-action-btn"><i class="fas fa-arrow-left"></i> Cart</a>
+    </div>
+  </nav>
+
+  <section class="checkout-section">
+    <div class="container">
+      <div class="checkout-layout">
+        <div class="checkout-form-area">
+          <!-- Step 1: Customer Information -->
+          <div class="checkout-step" id="step1">
+            <h2 class="checkout-step-title">Customer Information</h2>
+            <form id="checkoutForm">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Full Name *</label>
+                  <input type="text" id="customerName" required placeholder="Enter your full name">
+                </div>
+              </div>
+              <div class="form-row form-row-2">
+                <div class="form-group">
+                  <label>Email Address</label>
+                  <input type="email" id="customerEmail" placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                  <label>Phone Number *</label>
+                  <input type="tel" id="customerPhone" required placeholder="+234 XXX XXX XXXX">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Delivery Address *</label>
+                <textarea id="customerAddress" required placeholder="Enter your full delivery address" rows="3"></textarea>
+              </div>
+              <div class="form-row form-row-2">
+                <div class="form-group">
+                  <label>City *</label>
+                  <input type="text" id="customerCity" required placeholder="e.g. Lagos">
+                </div>
+                <div class="form-group">
+                  <label>State *</label>
+                  <input type="text" id="customerState" required placeholder="e.g. Lagos">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Payment Method</label>
+                <div class="payment-options">
+                  <label class="payment-option active">
+                    <input type="radio" name="payment" value="pay_on_delivery" checked>
+                    <div class="payment-option-inner">
+                      <i class="fas fa-money-bill-wave"></i>
+                      <span>Pay on Delivery</span>
+                    </div>
+                  </label>
+                  <label class="payment-option">
+                    <input type="radio" name="payment" value="bank_transfer">
+                    <div class="payment-option-inner">
+                      <i class="fas fa-university"></i>
+                      <span>Bank Transfer</span>
+                    </div>
+                  </label>
+                  <label class="payment-option">
+                    <input type="radio" name="payment" value="whatsapp">
+                    <div class="payment-option-inner">
+                      <i class="fab fa-whatsapp"></i>
+                      <span>Order via WhatsApp</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+              <div class="form-group" id="bankDetails" style="display:none;">
+                <div class="bank-info">
+                  <h4>Bank Transfer Details</h4>
+                  <p>Please transfer the total amount to:</p>
+                  <div class="bank-detail-row"><strong>Bank:</strong> <span>Contact us for details</span></div>
+                  <div class="bank-detail-row"><strong>Account Name:</strong> <span>Urban Hilt Ltd</span></div>
+                  <div class="bank-detail-row"><strong>WhatsApp:</strong> <span>+234 814 674 7883</span></div>
+                  <p class="bank-note">Send proof of payment via WhatsApp to confirm your order.</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Order Notes (optional)</label>
+                <textarea id="orderNotes" placeholder="Any special instructions..." rows="2"></textarea>
+              </div>
+              <button type="button" class="btn btn-primary btn-lg btn-block" id="toStep2">Continue to Review</button>
+            </form>
+          </div>
+
+          <!-- Step 2: Review -->
+          <div class="checkout-step" id="step2" style="display:none;">
+            <h2 class="checkout-step-title">Review Your Order</h2>
+            <div class="review-items" id="reviewItems"></div>
+            <div class="review-customer" id="reviewCustomer"></div>
+            <div class="checkout-actions">
+              <button class="btn btn-outline btn-lg" id="backToStep1"><i class="fas fa-arrow-left"></i> Back</button>
+              <button class="btn btn-primary btn-lg" id="placeOrder"><i class="fas fa-check"></i> Place Order</button>
+            </div>
+          </div>
+
+          <!-- Step 3: Confirmation -->
+          <div class="checkout-step" id="step3" style="display:none;">
+            <div class="order-success">
+              <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+              <h2>Order Placed Successfully!</h2>
+              <p class="order-number">Order Number: <strong id="orderNumber"></strong></p>
+              <p>Thank you for shopping with Urban Hilt! We'll process your order shortly.</p>
+              <p>For any questions, contact us on WhatsApp.</p>
+              <div class="success-actions">
+                <a href="https://wa.me/2348146747883" class="btn btn-success btn-lg" target="_blank"><i class="fab fa-whatsapp"></i> Contact Us</a>
+                <a href="/shop.html" class="btn btn-outline btn-lg">Continue Shopping</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="checkout-sidebar" id="checkoutSidebar">
+          <h3>Order Summary</h3>
+          <div class="checkout-items" id="checkoutItems"></div>
+          <div class="summary-row"><span>Subtotal</span><span id="checkoutSubtotal">₦0</span></div>
+          <div class="summary-row"><span>Shipping</span><span id="checkoutShipping">₦0</span></div>
+          <div class="summary-row summary-total"><span>Total</span><span id="checkoutTotal">₦0</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer footer-minimal">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2026 Urban Hilt Ltd. All rights reserved. | 134/136 Broad Street, Lagos | +234 814 674 7883</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script src="/js/checkout.js"></script>
+</body>
+</html>

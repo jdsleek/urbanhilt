@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product — URBAN HILT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="announcement-bar">
+    <div class="announcement-slider">
+      <span>FREE SHIPPING ON ORDERS OVER ₦50,000</span>
+      <span>USE CODE <strong>URBANHILT10</strong> FOR 10% OFF YOUR FIRST ORDER</span>
+    </div>
+  </div>
+
+  <nav class="navbar navbar-light" id="navbar">
+    <div class="nav-container">
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+      <a href="/" class="nav-logo"><span class="logo-text">URBAN HILT</span></a>
+      <div class="nav-menu" id="navMenu">
+        <div class="nav-menu-inner">
+          <a href="/" class="nav-link">Home</a>
+          <a href="/shop.html" class="nav-link">Shop</a>
+          <div class="nav-dropdown">
+            <a href="#" class="nav-link nav-dropdown-trigger">Categories <i class="fas fa-chevron-down"></i></a>
+            <div class="nav-dropdown-menu" id="navCategories"></div>
+          </div>
+          <a href="/shop.html?filter=new" class="nav-link">New Arrivals</a>
+          <a href="/contact.html" class="nav-link">Contact</a>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <button class="nav-action-btn" id="searchToggle"><i class="fas fa-search"></i></button>
+        <a href="/cart.html" class="nav-action-btn cart-btn"><i class="fas fa-shopping-bag"></i><span class="cart-count" id="cartCount">0</span></a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="search-overlay" id="searchOverlay">
+    <div class="search-overlay-inner">
+      <button class="search-close" id="searchClose"><i class="fas fa-times"></i></button>
+      <h2 class="search-title">What are you looking for?</h2>
+      <div class="search-input-wrap">
+        <input type="text" id="searchInput" placeholder="Search products..." autocomplete="off">
+        <i class="fas fa-search"></i>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+  </div>
+
+  <section class="page-header page-header-sm">
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/">Home</a> <span>/</span> <a href="/shop.html">Shop</a> <span>/</span> <span id="breadcrumbProduct">Loading...</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="product-detail-section">
+    <div class="container">
+      <div class="product-detail" id="productDetail">
+        <div class="product-gallery">
+          <div class="gallery-main">
+            <img id="mainImage" src="" alt="Product image">
+            <button class="gallery-nav gallery-prev" id="galleryPrev"><i class="fas fa-chevron-left"></i></button>
+            <button class="gallery-nav gallery-next" id="galleryNext"><i class="fas fa-chevron-right"></i></button>
+          </div>
+          <div class="gallery-thumbs" id="galleryThumbs"></div>
+        </div>
+        <div class="product-info">
+          <div class="product-badges" id="productBadges"></div>
+          <h1 class="product-detail-name" id="productName"></h1>
+          <div class="product-detail-price" id="productPrice"></div>
+          <p class="product-detail-desc" id="productDesc"></p>
+          <div class="product-options">
+            <div class="option-group" id="sizeGroup" style="display:none;">
+              <label class="option-label">Size</label>
+              <div class="size-options" id="sizeOptions"></div>
+            </div>
+            <div class="option-group" id="colorGroup" style="display:none;">
+              <label class="option-label">Color</label>
+              <div class="color-options" id="colorOptions"></div>
+            </div>
+          </div>
+          <div class="product-quantity">
+            <label class="option-label">Quantity</label>
+            <div class="quantity-selector">
+              <button class="qty-btn" id="qtyMinus">−</button>
+              <input type="number" value="1" min="1" max="10" id="qtyInput" class="qty-input">
+              <button class="qty-btn" id="qtyPlus">+</button>
+            </div>
+          </div>
+          <div class="product-actions">
+            <button class="btn btn-primary btn-lg btn-block" id="addToCartBtn">
+              <i class="fas fa-shopping-bag"></i> Add to Cart
+            </button>
+            <a href="" class="btn btn-success btn-lg btn-block" id="buyWhatsapp" target="_blank">
+              <i class="fab fa-whatsapp"></i> Order via WhatsApp
+            </a>
+          </div>
+          <div class="product-meta">
+            <div class="meta-item"><i class="fas fa-truck"></i> Free shipping on orders over ₦50,000</div>
+            <div class="meta-item"><i class="fas fa-undo"></i> Easy returns within 7 days</div>
+            <div class="meta-item"><i class="fas fa-shield-alt"></i> 100% authentic products</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section related-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">You May Also Like</h2>
+      </div>
+      <div class="products-grid" id="relatedProducts"></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col footer-brand">
+          <h3 class="footer-logo">URBAN HILT</h3>
+          <p class="footer-tagline">Luxury Redefined</p>
+          <div class="footer-socials">
+            <a href="https://www.tiktok.com/@urbanhiltluxurywears" target="_blank"><i class="fab fa-tiktok"></i></a>
+            <a href="https://www.instagram.com/urban_hilt" target="_blank"><i class="fab fa-instagram"></i></a>
+            <a href="https://wa.me/2348146747883" target="_blank"><i class="fab fa-whatsapp"></i></a>
+          </div>
+        </div>
+        <div class="footer-col"><h4>Quick Links</h4><ul><li><a href="/shop.html">Shop All</a></li><li><a href="/contact.html">Contact Us</a></li></ul></div>
+        <div class="footer-col"><h4>Get in Touch</h4><ul class="footer-contact"><li><i class="fas fa-map-marker-alt"></i> 134/136 Broad Street, Lagos</li><li><i class="fas fa-phone"></i> <a href="tel:+2348146747883">+234 814 674 7883</a></li></ul></div>
+      </div>
+      <div class="footer-bottom"><p>&copy; 2026 Urban Hilt Ltd. All rights reserved.</p></div>
+    </div>
+  </footer>
+
+  <a href="https://wa.me/2348146747883" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
+  <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+
+  <script src="/js/main.js"></script>
+  <script src="/js/product.js"></script>
+</body>
+</html>

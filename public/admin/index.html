@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — URBAN HILT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <!-- Login Screen -->
+  <div class="admin-login" id="loginScreen">
+    <div class="login-card">
+      <div class="login-header">
+        <h1>URBAN HILT</h1>
+        <p>Admin Dashboard</p>
+      </div>
+      <form id="loginForm">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="loginUsername" required placeholder="Enter username" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" required placeholder="Enter password" autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+        <p class="login-error" id="loginError"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin Dashboard -->
+  <div class="admin-layout" id="adminLayout" style="display:none;">
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-brand">
+        <h2>URBAN HILT</h2>
+        <span>Admin Panel</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="sidebar-link active" data-page="dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+        <a href="#" class="sidebar-link" data-page="products"><i class="fas fa-box"></i> Products</a>
+        <a href="#" class="sidebar-link" data-page="categories"><i class="fas fa-tags"></i> Categories</a>
+        <a href="#" class="sidebar-link" data-page="orders"><i class="fas fa-shopping-cart"></i> Orders</a>
+        <a href="#" class="sidebar-link" data-page="subscribers"><i class="fas fa-envelope"></i> Subscribers</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/" target="_blank"><i class="fas fa-external-link-alt"></i> View Store</a>
+        <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-header">
+        <button class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+        <h2 id="pageTitle">Dashboard</h2>
+        <div class="admin-user">
+          <span id="adminName">Admin</span>
+          <i class="fas fa-user-circle"></i>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <!-- Dashboard Page -->
+        <div class="admin-page active" id="page-dashboard">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#c9a96e22;color:#c9a96e"><i class="fas fa-box"></i></div>
+              <div class="stat-info"><h3 id="statProducts">0</h3><p>Products</p></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#3b82f622;color:#3b82f6"><i class="fas fa-shopping-cart"></i></div>
+              <div class="stat-info"><h3 id="statOrders">0</h3><p>Total Orders</p></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#10b98122;color:#10b981"><i class="fas fa-naira-sign"></i></div>
+              <div class="stat-info"><h3 id="statRevenue">₦0</h3><p>Revenue</p></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#f59e0b22;color:#f59e0b"><i class="fas fa-clock"></i></div>
+              <div class="stat-info"><h3 id="statPending">0</h3><p>Pending Orders</p></div>
+            </div>
+          </div>
+          <div class="dashboard-grid">
+            <div class="dashboard-card">
+              <h3>Recent Orders</h3>
+              <div class="table-wrap">
+                <table class="admin-table">
+                  <thead><tr><th>Order #</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
+                  <tbody id="recentOrdersTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Products Page -->
+        <div class="admin-page" id="page-products">
+          <div class="page-actions">
+            <button class="btn btn-primary" id="addProductBtn"><i class="fas fa-plus"></i> Add Product</button>
+          </div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Featured</th><th>Actions</th></tr></thead>
+              <tbody id="productsTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Categories Page -->
+        <div class="admin-page" id="page-categories">
+          <div class="page-actions">
+            <button class="btn btn-primary" id="addCategoryBtn"><i class="fas fa-plus"></i> Add Category</button>
+          </div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Name</th><th>Slug</th><th>Products</th><th>Actions</th></tr></thead>
+              <tbody id="categoriesTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Orders Page -->
+        <div class="admin-page" id="page-orders">
+          <div class="page-actions">
+            <div class="order-filters">
+              <button class="btn btn-sm active" data-status="">All</button>
+              <button class="btn btn-sm" data-status="pending">Pending</button>
+              <button class="btn btn-sm" data-status="processing">Processing</button>
+              <button class="btn btn-sm" data-status="shipped">Shipped</button>
+              <button class="btn btn-sm" data-status="delivered">Delivered</button>
+              <button class="btn btn-sm" data-status="cancelled">Cancelled</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Order #</th><th>Customer</th><th>Phone</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+              <tbody id="ordersTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Subscribers Page -->
+        <div class="admin-page" id="page-subscribers">
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Email</th><th>Date Subscribed</th></tr></thead>
+              <tbody id="subscribersTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Product Modal -->
+  <div class="modal-overlay" id="productModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="productModalTitle">Add Product</h3>
+        <button class="modal-close" id="closeProductModal"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="productForm" enctype="multipart/form-data">
+        <input type="hidden" id="productId">
+        <div class="modal-body">
+          <div class="form-row form-row-2">
+            <div class="form-group"><label>Product Name *</label><input type="text" id="prodName" required></div>
+            <div class="form-group"><label>SKU</label><input type="text" id="prodSku"></div>
+          </div>
+          <div class="form-group"><label>Description</label><textarea id="prodDesc" rows="3"></textarea></div>
+          <div class="form-row form-row-3">
+            <div class="form-group"><label>Price (₦) *</label><input type="number" id="prodPrice" required step="0.01"></div>
+            <div class="form-group"><label>Sale Price (₦)</label><input type="number" id="prodSalePrice" step="0.01"></div>
+            <div class="form-group"><label>Stock</label><input type="number" id="prodStock" value="0"></div>
+          </div>
+          <div class="form-row form-row-2">
+            <div class="form-group"><label>Category</label><select id="prodCategory"><option value="">Select Category</option></select></div>
+            <div class="form-group">
+              <label>Flags</label>
+              <div class="checkbox-group">
+                <label><input type="checkbox" id="prodFeatured"> Featured</label>
+                <label><input type="checkbox" id="prodNewArrival"> New Arrival</label>
+                <label><input type="checkbox" id="prodBestSeller"> Best Seller</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-row form-row-2">
+            <div class="form-group"><label>Sizes (comma separated)</label><input type="text" id="prodSizes" placeholder="S, M, L, XL, XXL"></div>
+            <div class="form-group"><label>Colors (comma separated)</label><input type="text" id="prodColors" placeholder="Black, White, Red"></div>
+          </div>
+          <div class="form-group">
+            <label>Product Images</label>
+            <div class="image-upload-area" id="imageUploadArea">
+              <input type="file" id="prodImages" multiple accept="image/*" style="display:none">
+              <div class="upload-placeholder" id="uploadPlaceholder">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Click or drag images here</p>
+                <small>Max 6 images, 5MB each</small>
+              </div>
+              <div class="image-previews" id="imagePreviews"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="cancelProduct">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveProduct">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Category Modal -->
+  <div class="modal-overlay" id="categoryModal">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 id="categoryModalTitle">Add Category</h3>
+        <button class="modal-close" id="closeCategoryModal"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="categoryForm">
+        <input type="hidden" id="categoryId">
+        <div class="modal-body">
+          <div class="form-group"><label>Category Name *</label><input type="text" id="catName" required></div>
+          <div class="form-group"><label>Description</label><textarea id="catDesc" rows="2"></textarea></div>
+          <div class="form-group"><label>Display Order</label><input type="number" id="catOrder" value="0"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="cancelCategory">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Category</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Order Detail Modal -->
+  <div class="modal-overlay" id="orderModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="orderModalTitle">Order Details</h3>
+        <button class="modal-close" id="closeOrderModal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body" id="orderDetailContent"></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="closeOrderBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/admin/admin.js"></script>
+</body>
+</html>
