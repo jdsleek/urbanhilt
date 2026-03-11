@@ -40,13 +40,18 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.admin-page').forEach(p => p.classList.remove('active'));
       document.getElementById(`page-${page}`).classList.add('active');
       document.getElementById('pageTitle').textContent = page.charAt(0).toUpperCase() + page.slice(1);
+      closeSidebar();
       loadPageData(page);
     });
   });
 
   // Sidebar toggle (mobile)
-  document.getElementById('sidebarToggle')?.addEventListener('click', () => {
-    document.getElementById('adminSidebar')?.classList.toggle('active');
+  document.getElementById('sidebarToggle')?.addEventListener('click', toggleSidebar);
+  document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
+
+  // Close sidebar on footer link clicks (View Store, Logout) on mobile
+  document.querySelectorAll('.sidebar-footer a, .sidebar-footer button').forEach(el => {
+    el.addEventListener('click', closeSidebar);
   });
 
   // Product modal
@@ -105,6 +110,18 @@ async function handleLogin(e) {
   } catch (err) {
     document.getElementById('loginError').textContent = 'Connection error. Please try again.';
   }
+}
+
+function toggleSidebar() {
+  document.getElementById('adminSidebar')?.classList.toggle('active');
+  document.getElementById('sidebarOverlay')?.classList.toggle('active');
+  document.body.classList.toggle('sidebar-open');
+}
+
+function closeSidebar() {
+  document.getElementById('adminSidebar')?.classList.remove('active');
+  document.getElementById('sidebarOverlay')?.classList.remove('active');
+  document.body.classList.remove('sidebar-open');
 }
 
 function logout() {
