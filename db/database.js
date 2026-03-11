@@ -1,40 +1,34 @@
-const Database = require('better-sqlite3');
-const path = require('path');
+const { Pool } = require('pg');
 
-const DB_PATH = path.join(__dirname, 'urbanhilt.db');
-let db;
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL?.includes('localhost') ? false : { rejectUnauthorized: false },
+});
 
-function getDb() {
-  if (!db) {
-    db = new Database(DB_PATH);
-    db.pragma('journal_mode = WAL');
-    db.pragma('foreign_keys = ON');
-  }
-  return db;
+async function query(text, params) {
+  return pool.query(text, params);
 }
 
-function initDatabase() {
-  const db = getDb();
-
-  db.exec(`
+async function initDatabase() {
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS categories (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       slug TEXT UNIQUE NOT NULL,
       description TEXT,
       image TEXT,
       display_order INTEGER DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS products (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       slug TEXT UNIQUE NOT NULL,
       description TEXT,
-      price REAL NOT NULL,
-      sale_price REAL,
-      category_id INTEGER,
+      price NUMERIC NOT NULL,
+      sale_price NUMERIC,
+      category_id INTEGER REFERENCES categories(id),
       sizes TEXT DEFAULT '[]',
       colors TEXT DEFAULT '[]',
       images TEXT DEFAULT '[]',
@@ -43,12 +37,11 @@ function initDatabase() {
       best_seller INTEGER DEFAULT 0,
       stock INTEGER DEFAULT 0,
       sku TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (category_id) REFERENCES categories(id)
+      created_at TIMESTAMP DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS orders (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       order_number TEXT UNIQUE NOT NULL,
       customer_name TEXT NOT NULL,
       customer_email TEXT,
@@ -58,27 +51,28 @@ function initDatabase() {
       state TEXT,
       country TEXT DEFAULT 'Nigeria',
       items TEXT NOT NULL,
-      subtotal REAL NOT NULL,
-      shipping REAL DEFAULT 0,
-      total REAL NOT NULL,
+      subtotal NUMERIC NOT NULL,
+      shipping NUMERIC DEFAULT 0,
+      total NUMERIC NOT NULL,
       status TEXT DEFAULT 'pending',
       payment_method TEXT DEFAULT 'pay_on_delivery',
       payment_ref TEXT,
       notes TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS admin_users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       username TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
       full_name TEXT,
       role TEXT DEFAULT 'admin',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS customers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       full_name TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
       phone TEXT,
@@ -86,28 +80,26 @@ function initDatabase() {
       address TEXT,
       city TEXT,
       state TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS wishlists (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       session_id TEXT NOT NULL,
-      product_id INTEGER NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+      product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+      created_at TIMESTAMP DEFAULT NOW(),
       UNIQUE(session_id, product_id)
     );
 
     CREATE TABLE IF NOT EXISTS reviews (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      product_id INTEGER NOT NULL,
+      id SERIAL PRIMARY KEY,
+      product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
       customer_name TEXT NOT NULL,
       rating INTEGER NOT NULL CHECK(rating >= 1 AND rating <= 5),
       title TEXT,
       comment TEXT,
       verified INTEGER DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+      created_at TIMESTAMP DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS site_settings (
@@ -116,13 +108,13 @@ function initDatabase() {
     );
 
     CREATE TABLE IF NOT EXISTS newsletter_subscribers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       email TEXT UNIQUE NOT NULL,
-      subscribed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      subscribed_at TIMESTAMP DEFAULT NOW()
     );
   `);
 
   console.log('  ✓ Database initialized successfully');
 }
 
-module.exports = { getDb, initDatabase };
+module.exports = { query, initDatabase, pool };
