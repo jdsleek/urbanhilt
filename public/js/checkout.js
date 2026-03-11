@@ -55,8 +55,20 @@ function initPaymentOptions() {
       opt.classList.add('active');
       const method = opt.querySelector('input').value;
       document.getElementById('bankDetails').style.display = method === 'bank_transfer' ? 'block' : 'none';
+      const paystackInfo = document.getElementById('paystackInfo');
+      if (paystackInfo) paystackInfo.style.display = method === 'paystack' ? 'block' : 'none';
     });
   });
+
+  loadPaystackScript();
+}
+
+function loadPaystackScript() {
+  if (document.getElementById('paystackScript')) return;
+  const script = document.createElement('script');
+  script.id = 'paystackScript';
+  script.src = 'https://js.paystack.co/v1/inline.js';
+  document.head.appendChild(script);
 }
 
 function initStepNavigation() {
@@ -87,48 +99,12 @@ function initStepNavigation() {
       return;
     }
 
-    const cart = UH.getCart();
-    const subtotal = UH.getCartTotal();
-    const shipping = subtotal >= 50000 ? 0 : 3000;
-
-    const orderData = {
-      customer_name: document.getElementById('customerName').value.trim(),
-      customer_email: document.getElementById('customerEmail').value.trim(),
-      customer_phone: document.getElementById('customerPhone').value.trim(),
-      address: document.getElementById('customerAddress').value.trim(),
-      city: document.getElementById('customerCity').value.trim(),
-      state: document.getElementById('customerState').value.trim(),
-      items: cart,
-      subtotal,
-      shipping,
-      total: subtotal + shipping,
-      payment_method: paymentMethod,
-      notes: document.getElementById('orderNotes').value.trim()
-    };
-
-    try {
-      const btn = document.getElementById('placeOrder');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-
-      const data = await UH.api('/orders', {
-        method: 'POST',
-        body: JSON.stringify(orderData)
-      });
-
-      if (data.order) {
-        document.getElementById('orderNumber').textContent = data.order.order_number;
-        localStorage.removeItem('uh_cart');
-        UH.updateCartCount();
-        showStep(3);
-      } else {
-        UH.showToast(data.error || 'Order failed. Please try again.', 'fa-exclamation-circle');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-check"></i> Place Order';
-      }
-    } catch (e) {
-      UH.showToast('Something went wrong. Please try again.', 'fa-exclamation-circle');
+    if (paymentMethod === 'paystack') {
+      initiatePaystackPayment();
+      return;
     }
+
+    await placeOrderWithMethod(paymentMethod);
   });
 }
 
@@ -141,6 +117,103 @@ function showStep(step) {
     s.classList.toggle('completed', sNum < step);
   });
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function placeOrderWithMethod(paymentMethod, paystackRef) {
+  const cart = UH.getCart();
+  const subtotal = UH.getCartTotal();
+  const shipping = subtotal >= 50000 ? 0 : 3000;
+
+  const orderData = {
+    customer_name: document.getElementById('customerName').value.trim(),
+    customer_email: document.getElementById('customerEmail').value.trim(),
+    customer_phone: document.getElementById('customerPhone').value.trim(),
+    address: document.getElementById('customerAddress').value.trim(),
+    city: document.getElementById('customerCity').value.trim(),
+    state: document.getElementById('customerState').value.trim(),
+    items: cart,
+    subtotal,
+    shipping,
+    total: subtotal + shipping,
+    payment_method: paymentMethod,
+    notes: document.getElementById('orderNotes').value.trim()
+  };
+
+  if (paystackRef) {
+    orderData.payment_reference = paystackRef;
+    orderData.payment_status = 'paid';
+  }
+
+  try {
+    const btn = document.getElementById('placeOrder');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+    const data = await UH.api('/orders', {
+      method: 'POST',
+      body: JSON.stringify(orderData)
+    });
+
+    if (data.order) {
+      document.getElementById('orderNumber').textContent = data.order.order_number;
+      localStorage.removeItem('uh_cart');
+      UH.updateCartCount();
+      showStep(3);
+    } else {
+      UH.showToast(data.error || 'Order failed. Please try again.', 'fa-exclamation-circle');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-check"></i> Place Order';
+    }
+  } catch (e) {
+    UH.showToast('Something went wrong. Please try again.', 'fa-exclamation-circle');
+    const btn = document.getElementById('placeOrder');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Place Order'; }
+  }
+}
+
+function initiatePaystackPayment() {
+  const email = document.getElementById('customerEmail').value.trim();
+  if (!email) {
+    UH.showToast('Email is required for online payment', 'fa-exclamation-circle');
+    return;
+  }
+
+  const subtotal = UH.getCartTotal();
+  const shipping = subtotal >= 50000 ? 0 : 3000;
+  const total = subtotal + shipping;
+
+  if (typeof PaystackPop === 'undefined') {
+    UH.showToast('Payment system loading. Please try again.', 'fa-exclamation-circle');
+    loadPaystackScript();
+    return;
+  }
+
+  const btn = document.getElementById('placeOrder');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initiating payment...';
+
+  const handler = PaystackPop.setup({
+    key: window.PAYSTACK_PUBLIC_KEY || 'pk_test_xxxx',
+    email: email,
+    amount: total * 100,
+    currency: 'NGN',
+    ref: 'UH_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 8),
+    metadata: {
+      customer_name: document.getElementById('customerName').value.trim(),
+      customer_phone: document.getElementById('customerPhone').value.trim(),
+      cart_items: UH.getCart().length
+    },
+    callback: function(response) {
+      placeOrderWithMethod('paystack', response.reference);
+    },
+    onClose: function() {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-check"></i> Place Order';
+      UH.showToast('Payment cancelled', 'fa-info-circle');
+    }
+  });
+
+  handler.openIframe();
 }
 
 function renderReview() {
@@ -160,7 +233,7 @@ function renderReview() {
   `).join('');
 
   const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
-  const paymentLabels = { pay_on_delivery: 'Pay on Delivery', bank_transfer: 'Bank Transfer', whatsapp: 'WhatsApp Order' };
+  const paymentLabels = { pay_on_delivery: 'Pay on Delivery', bank_transfer: 'Bank Transfer', whatsapp: 'WhatsApp Order', paystack: 'Pay Online (Card)' };
 
   reviewCustomer.innerHTML = `
     <h4>Delivery Information</h4>

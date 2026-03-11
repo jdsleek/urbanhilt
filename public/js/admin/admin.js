@@ -138,6 +138,42 @@ async function loadDashboard() {
   document.getElementById('statOrders').textContent = data.totalOrders;
   document.getElementById('statRevenue').textContent = '₦' + Number(data.totalRevenue).toLocaleString();
   document.getElementById('statPending').textContent = data.pendingOrders;
+  const subEl = document.getElementById('statSubscribers');
+  if (subEl) subEl.textContent = data.totalSubscribers || 0;
+
+  // Render monthly revenue/orders bar chart
+  if (data.monthlyOrders && data.monthlyOrders.length > 0) {
+    const months = data.monthlyOrders.slice(-6);
+    const maxRevenue = Math.max(...months.map(m => m.revenue || 0), 1);
+
+    let chartHTML = `
+      <div class="dashboard-chart" style="grid-column:1/-1;background:#fff;border-radius:12px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,0.08);margin-top:24px;">
+        <h3 style="margin:0 0 20px;font-size:1.1rem;color:#333;">Monthly Revenue &amp; Orders</h3>
+        <div style="display:flex;align-items:flex-end;gap:12px;height:200px;padding:0 8px;">
+          ${months.map(m => {
+            const pct = ((m.revenue || 0) / maxRevenue * 100).toFixed(1);
+            const monthLabel = new Date(m.month + '-01').toLocaleString('default', { month: 'short' });
+            return `
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;">
+                <div style="flex:1;width:100%;display:flex;align-items:flex-end;">
+                  <div style="width:100%;background:linear-gradient(to top,#c9a96e,#e8d5a3);border-radius:6px 6px 0 0;height:${pct}%;min-height:4px;position:relative;transition:height 0.3s;" title="₦${Number(m.revenue||0).toLocaleString()} / ${m.orders||0} orders">
+                    <span style="position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:0.65rem;color:#666;white-space:nowrap;">${m.orders||0} orders</span>
+                  </div>
+                </div>
+                <span style="font-size:0.7rem;color:#999;margin-top:8px;">${monthLabel}</span>
+                <span style="font-size:0.6rem;color:#aaa;">₦${Number((m.revenue||0)/1000).toFixed(0)}k</span>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+
+    const existingChart = document.querySelector('.dashboard-chart');
+    if (existingChart) existingChart.remove();
+    const grid = document.querySelector('.dashboard-grid');
+    if (grid) {
+      grid.insertAdjacentHTML('beforeend', chartHTML);
+    }
+  }
 
   const table = document.getElementById('recentOrdersTable');
   table.innerHTML = data.recentOrders?.map(o => `

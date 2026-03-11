@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231a1a1a' width='100' height='100' rx='12'/><text x='50' y='68' font-family='serif' font-size='52' font-weight='bold' fill='%23c9a96e' text-anchor='middle'>UH</text></svg>">
+  <meta property="og:image" content="https://urbanhilt.up.railway.app/og-image.svg">
+  <title>Track Order — URBAN HILT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .tracking-progress { display: flex; justify-content: space-between; position: relative; margin: 2.5rem 0; padding: 0; }
+    .tracking-progress::before { content: ''; position: absolute; top: 20px; left: 0; right: 0; height: 3px; background: #e0e0e0; z-index: 0; }
+    .tracking-progress .progress-fill { position: absolute; top: 20px; left: 0; height: 3px; background: var(--accent, #c9a96e); z-index: 1; transition: width 0.6s ease; }
+    .tracking-step { display: flex; flex-direction: column; align-items: center; position: relative; z-index: 2; flex: 1; }
+    .tracking-step .step-icon { width: 42px; height: 42px; border-radius: 50%; background: #e0e0e0; color: #999; display: flex; align-items: center; justify-content: center; font-size: 1rem; margin-bottom: 0.7rem; transition: all 0.3s; }
+    .tracking-step.active .step-icon { background: var(--accent, #c9a96e); color: #fff; }
+    .tracking-step.completed .step-icon { background: #27ae60; color: #fff; }
+    .tracking-step .step-label { font-size: 0.8rem; color: #999; text-align: center; font-weight: 500; }
+    .tracking-step.active .step-label, .tracking-step.completed .step-label { color: var(--text, #1a1a1a); font-weight: 600; }
+    .tracking-step .step-date { font-size: 0.72rem; color: #aaa; margin-top: 0.2rem; }
+    .order-detail-card { background: var(--bg-warm, #faf8f5); border-radius: 8px; padding: 1.5rem 2rem; margin-bottom: 1.5rem; }
+    .order-detail-row { display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .order-detail-row:last-child { border-bottom: none; }
+    .order-detail-row .label { color: var(--text-light, #777); font-size: 0.9rem; }
+    .order-detail-row .value { font-weight: 600; font-size: 0.9rem; }
+    .order-items-list { list-style: none; padding: 0; margin: 0; }
+    .order-items-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .order-items-list li:last-child { border-bottom: none; }
+    @media (max-width: 600px) {
+      .tracking-step .step-label { font-size: 0.7rem; }
+      .tracking-step .step-icon { width: 34px; height: 34px; font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="announcement-bar">
+    <div class="announcement-slider">
+      <span>FREE SHIPPING ON ORDERS OVER ₦50,000</span>
+      <span>NEW COLLECTION JUST DROPPED — SHOP NOW</span>
+      <span>USE CODE <strong>URBANHILT10</strong> FOR 10% OFF YOUR FIRST ORDER</span>
+    </div>
+  </div>
+
+  <nav class="navbar navbar-light" id="navbar">
+    <div class="nav-container">
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+      <a href="/" class="nav-logo"><span class="logo-text">URBAN HILT</span></a>
+      <div class="nav-menu" id="navMenu">
+        <div class="nav-menu-inner">
+          <a href="/" class="nav-link">Home</a>
+          <a href="/shop.html" class="nav-link">Shop</a>
+          <div class="nav-dropdown">
+            <a href="#" class="nav-link nav-dropdown-trigger">Categories <i class="fas fa-chevron-down"></i></a>
+            <div class="nav-dropdown-menu" id="navCategories"></div>
+          </div>
+          <a href="/contact.html" class="nav-link">Contact</a>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <button class="nav-action-btn" id="searchToggle" aria-label="Search"><i class="fas fa-search"></i></button>
+        <a href="/cart.html" class="nav-action-btn cart-btn" aria-label="Cart"><i class="fas fa-shopping-bag"></i><span class="cart-count" id="cartCount">0</span></a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="search-overlay" id="searchOverlay">
+    <div class="search-overlay-inner">
+      <button class="search-close" id="searchClose"><i class="fas fa-times"></i></button>
+      <h2 class="search-title">What are you looking for?</h2>
+      <div class="search-input-wrap"><input type="text" id="searchInput" placeholder="Search products..." autocomplete="off"><i class="fas fa-search"></i></div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+  </div>
+
+  <section class="page-header">
+    <div class="container">
+      <div class="breadcrumb"><a href="/">Home</a> <span>/</span> <span>Track Order</span></div>
+      <h1 class="page-title">Track Your Order</h1>
+      <p class="page-subtitle">Enter your order number to see real-time delivery status</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div style="max-width: 700px; margin: 0 auto;">
+
+        <form id="trackForm" style="display: flex; gap: 1rem; margin-bottom: 2.5rem; flex-wrap: wrap;">
+          <input type="text" id="orderNumberInput" placeholder="Enter order number (e.g. UH-20260301-XXXX)" required style="flex: 1; min-width: 250px; padding: 0.85rem 1.2rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; font-family: 'Inter', sans-serif;">
+          <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Track</button>
+        </form>
+
+        <!-- Loading State -->
+        <div id="trackingLoading" style="display: none; text-align: center; padding: 3rem 0;">
+          <div class="spinner" style="width: 40px; height: 40px; border: 3px solid #eee; border-top-color: var(--accent, #c9a96e); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem;"></div>
+          <p style="color: var(--text-light);">Looking up your order...</p>
+        </div>
+
+        <!-- Results -->
+        <div id="trackingResult" style="display: none;">
+          <h2 style="font-family: 'Playfair Display', serif; margin-bottom: 0.5rem;">Order <span id="resultOrderNumber"></span></h2>
+          <p style="color: var(--text-light); margin-bottom: 2rem;">Status: <strong id="resultStatus" style="color: var(--accent, #c9a96e);"></strong></p>
+
+          <!-- Progress Bar -->
+          <div class="tracking-progress">
+            <div class="progress-fill" id="progressFill"></div>
+            <div class="tracking-step" id="stepPending">
+              <div class="step-icon"><i class="fas fa-clipboard-list"></i></div>
+              <span class="step-label">Pending</span>
+              <span class="step-date" id="datePending"></span>
+            </div>
+            <div class="tracking-step" id="stepProcessing">
+              <div class="step-icon"><i class="fas fa-cog"></i></div>
+              <span class="step-label">Processing</span>
+              <span class="step-date" id="dateProcessing"></span>
+            </div>
+            <div class="tracking-step" id="stepShipped">
+              <div class="step-icon"><i class="fas fa-truck"></i></div>
+              <span class="step-label">Shipped</span>
+              <span class="step-date" id="dateShipped"></span>
+            </div>
+            <div class="tracking-step" id="stepDelivered">
+              <div class="step-icon"><i class="fas fa-check-circle"></i></div>
+              <span class="step-label">Delivered</span>
+              <span class="step-date" id="dateDelivered"></span>
+            </div>
+          </div>
+
+          <!-- Order Details -->
+          <div class="order-detail-card" id="orderDetails">
+            <h3 style="margin-bottom: 1rem; font-family: 'Playfair Display', serif;">Order Details</h3>
+            <div id="orderDetailsContent"></div>
+          </div>
+
+          <!-- Order Items -->
+          <div class="order-detail-card" id="orderItems">
+            <h3 style="margin-bottom: 1rem; font-family: 'Playfair Display', serif;">Items</h3>
+            <ul class="order-items-list" id="orderItemsList"></ul>
+          </div>
+
+          <div style="text-align: center; margin-top: 2rem;">
+            <p style="color: var(--text-light); margin-bottom: 1rem;">Have questions about your order?</p>
+            <a href="#" id="whatsappOrderLink" class="btn btn-primary" target="_blank"><i class="fab fa-whatsapp"></i> Contact Us About This Order</a>
+          </div>
+        </div>
+
+        <!-- Not Found State -->
+        <div id="trackingNotFound" style="display: none; text-align: center; padding: 3rem 0;">
+          <div style="font-size: 3rem; color: #ddd; margin-bottom: 1rem;"><i class="fas fa-search"></i></div>
+          <h3 style="margin-bottom: 0.5rem;">Order Not Found</h3>
+          <p style="color: var(--text-light); margin-bottom: 1.5rem;">We couldn't find an order with that number. Please double-check and try again.</p>
+          <a href="https://wa.me/2348146747883?text=Hi%20Urban%20Hilt%2C%20I%20need%20help%20tracking%20my%20order" class="btn btn-outline" target="_blank"><i class="fab fa-whatsapp"></i> Get Help via WhatsApp</a>
+        </div>
+
+        <!-- Default / Empty State -->
+        <div id="trackingDefault" style="text-align: center; padding: 3rem 0;">
+          <div style="font-size: 3rem; color: var(--accent, #c9a96e); margin-bottom: 1rem;"><i class="fas fa-box"></i></div>
+          <h3 style="margin-bottom: 0.5rem;">Where's My Order?</h3>
+          <p style="color: var(--text-light); max-width: 400px; margin: 0 auto;">Enter your order number above to check the current status. You can find your order number in the confirmation email or WhatsApp message we sent you.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col footer-brand">
+          <h3 class="footer-logo">URBAN HILT</h3>
+          <p class="footer-tagline">Luxury Redefined</p>
+          <p class="footer-desc">Premium clothing and footwear for those who appreciate the finer things in life.</p>
+          <div class="footer-socials">
+            <a href="https://www.tiktok.com/@urbanhiltluxurywears" target="_blank"><i class="fab fa-tiktok"></i></a>
+            <a href="https://www.instagram.com/urban_hilt" target="_blank"><i class="fab fa-instagram"></i></a>
+            <a href="https://wa.me/2348146747883" target="_blank"><i class="fab fa-whatsapp"></i></a>
+            <a href="mailto:urbanhiltltd@gmail.com"><i class="fas fa-envelope"></i></a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <ul><li><a href="/shop.html">Shop All</a></li><li><a href="/shop.html?filter=new">New Arrivals</a></li><li><a href="/contact.html">Contact Us</a></li></ul>
+        </div>
+        <div class="footer-col">
+          <h4>Customer Care</h4>
+          <ul><li><a href="/shipping.html">Shipping & Returns</a></li><li><a href="/size-guide.html">Size Guide</a></li><li><a href="/privacy.html">Privacy Policy</a></li><li><a href="/terms.html">Terms of Service</a></li></ul>
+        </div>
+        <div class="footer-col">
+          <h4>Get in Touch</h4>
+          <ul class="footer-contact">
+            <li><i class="fas fa-map-marker-alt"></i> 134/136 Broad Street, Lagos</li>
+            <li><i class="fas fa-phone"></i> <a href="tel:+2348146747883">+234 814 674 7883</a></li>
+            <li><i class="fas fa-envelope"></i> <a href="mailto:urbanhiltltd@gmail.com">urbanhiltltd@gmail.com</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom"><p>&copy; 2026 Urban Hilt Ltd. All rights reserved.</p></div>
+    </div>
+  </footer>
+
+  <a href="https://wa.me/2348146747883?text=Hello%20Urban%20Hilt!" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
+  <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+
+  <script src="/js/main.js"></script>
+  <script>
+    const STATUSES = ['pending', 'processing', 'shipped', 'delivered'];
+    const STATUS_LABELS = { pending: 'Pending', processing: 'Processing', shipped: 'Shipped', delivered: 'Delivered', cancelled: 'Cancelled' };
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    function formatCurrency(amount) {
+      return '₦' + Number(amount).toLocaleString('en-NG');
+    }
+
+    function showState(state) {
+      ['trackingDefault', 'trackingLoading', 'trackingResult', 'trackingNotFound'].forEach(id => {
+        document.getElementById(id).style.display = id === state ? 'block' : 'none';
+      });
+    }
+
+    function updateProgress(status) {
+      const idx = STATUSES.indexOf(status);
+      const steps = document.querySelectorAll('.tracking-step');
+      const fill = document.getElementById('progressFill');
+
+      steps.forEach((step, i) => {
+        step.classList.remove('active', 'completed');
+        if (i < idx) step.classList.add('completed');
+        else if (i === idx) step.classList.add('active');
+      });
+
+      const pct = idx >= 0 ? (idx / (STATUSES.length - 1)) * 100 : 0;
+      fill.style.width = pct + '%';
+    }
+
+    function renderOrder(order) {
+      document.getElementById('resultOrderNumber').textContent = order.orderNumber || '';
+      document.getElementById('resultStatus').textContent = STATUS_LABELS[order.status] || order.status;
+
+      updateProgress(order.status);
+
+      if (order.createdAt) document.getElementById('datePending').textContent = formatDate(order.createdAt);
+      if (order.processedAt) document.getElementById('dateProcessing').textContent = formatDate(order.processedAt);
+      if (order.shippedAt) document.getElementById('dateShipped').textContent = formatDate(order.shippedAt);
+      if (order.deliveredAt) document.getElementById('dateDelivered').textContent = formatDate(order.deliveredAt);
+
+      const details = document.getElementById('orderDetailsContent');
+      details.innerHTML = `
+        <div class="order-detail-row"><span class="label">Order Date</span><span class="value">${formatDate(order.createdAt)}</span></div>
+        ${order.shippingAddress ? `<div class="order-detail-row"><span class="label">Delivery Address</span><span class="value">${order.shippingAddress.city || ''}, ${order.shippingAddress.state || ''}</span></div>` : ''}
+        ${order.totalAmount ? `<div class="order-detail-row"><span class="label">Total Amount</span><span class="value">${formatCurrency(order.totalAmount)}</span></div>` : ''}
+        ${order.paymentMethod ? `<div class="order-detail-row"><span class="label">Payment Method</span><span class="value">${order.paymentMethod}</span></div>` : ''}
+      `;
+
+      const itemsList = document.getElementById('orderItemsList');
+      if (order.items && order.items.length) {
+        itemsList.innerHTML = order.items.map(item => `
+          <li>
+            <div>
+              <strong>${item.name || item.productName || 'Product'}</strong>
+              ${item.size ? `<span style="color:var(--text-light); font-size:0.85rem;"> — Size: ${item.size}</span>` : ''}
+              ${item.quantity ? `<span style="color:var(--text-light); font-size:0.85rem;"> x${item.quantity}</span>` : ''}
+            </div>
+            <div style="font-weight:600;">${item.price ? formatCurrency(item.price * (item.quantity || 1)) : ''}</div>
+          </li>
+        `).join('');
+      } else {
+        document.getElementById('orderItems').style.display = 'none';
+      }
+
+      const whatsappLink = document.getElementById('whatsappOrderLink');
+      const msg = encodeURIComponent(`Hi Urban Hilt, I need help with my order ${order.orderNumber || ''}`);
+      whatsappLink.href = `https://wa.me/2348146747883?text=${msg}`;
+
+      showState('trackingResult');
+    }
+
+    async function trackOrder(orderNumber) {
+      showState('trackingLoading');
+      try {
+        const res = await fetch(`/api/orders/track/${encodeURIComponent(orderNumber)}`);
+        if (!res.ok) throw new Error('Not found');
+        const data = await res.json();
+        const order = data.order || data;
+        renderOrder(order);
+      } catch (err) {
+        showState('trackingNotFound');
+      }
+    }
+
+    document.getElementById('trackForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const val = document.getElementById('orderNumberInput').value.trim();
+      if (val) {
+        const url = new URL(window.location);
+        url.searchParams.set('order', val);
+        window.history.pushState({}, '', url);
+        trackOrder(val);
+      }
+    });
+
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const orderNum = params.get('order');
+      if (orderNum) {
+        document.getElementById('orderNumberInput').value = orderNum;
+        trackOrder(orderNum);
+      }
+    })();
+  </script>
+</body>
+</html>

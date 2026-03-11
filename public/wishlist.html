@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231a1a1a' width='100' height='100' rx='12'/><text x='50' y='68' font-family='serif' font-size='52' font-weight='bold' fill='%23c9a96e' text-anchor='middle'>UH</text></svg>">
   <meta property="og:image" content="https://urbanhilt.up.railway.app/og-image.svg">
-  <title>Shopping Cart — URBAN HILT</title>
+  <title>Wishlist — URBAN HILT</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -13,7 +13,11 @@
 </head>
 <body>
   <div class="announcement-bar">
-    <div class="announcement-slider"><span>FREE SHIPPING ON ORDERS OVER ₦50,000</span></div>
+    <div class="announcement-slider">
+      <span>FREE SHIPPING ON ORDERS OVER ₦50,000</span>
+      <span>NEW COLLECTION JUST DROPPED — SHOP NOW</span>
+      <span>USE CODE <strong>URBANHILT10</strong> FOR 10% OFF YOUR FIRST ORDER</span>
+    </div>
   </div>
 
   <nav class="navbar navbar-light" id="navbar">
@@ -32,9 +36,8 @@
         </div>
       </div>
       <div class="nav-actions">
-        <button class="nav-action-btn" id="searchToggle"><i class="fas fa-search"></i></button>
-        <a href="/wishlist.html" class="nav-action-btn" aria-label="Wishlist"><i class="fas fa-heart"></i><span class="wishlist-count" id="wishlistCount">0</span></a>
-        <a href="/cart.html" class="nav-action-btn cart-btn"><i class="fas fa-shopping-bag"></i><span class="cart-count" id="cartCount">0</span></a>
+        <button class="nav-action-btn" id="searchToggle" aria-label="Search"><i class="fas fa-search"></i></button>
+        <a href="/cart.html" class="nav-action-btn cart-btn" aria-label="Cart"><i class="fas fa-shopping-bag"></i><span class="cart-count" id="cartCount">0</span></a>
       </div>
     </div>
   </nav>
@@ -48,32 +51,34 @@
     </div>
   </div>
 
-  <section class="page-header page-header-sm">
+  <section class="page-header">
     <div class="container">
-      <div class="breadcrumb"><a href="/">Home</a> <span>/</span> <span>Shopping Cart</span></div>
-      <h1 class="page-title">Shopping Cart</h1>
+      <div class="breadcrumb"><a href="/">Home</a> <span>/</span> <span>Wishlist</span></div>
+      <h1 class="page-title">My Wishlist</h1>
+      <p class="page-subtitle">Your saved favourites, all in one place</p>
     </div>
   </section>
 
-  <section class="cart-section">
+  <section class="section">
     <div class="container">
-      <div class="cart-layout" id="cartContent">
-        <div class="cart-items" id="cartItems"></div>
-        <div class="cart-summary" id="cartSummary">
-          <h3>Order Summary</h3>
-          <div class="summary-row"><span>Subtotal</span><span id="cartSubtotal">₦0</span></div>
-          <div class="summary-row"><span>Shipping</span><span id="cartShipping">Calculated at checkout</span></div>
-          <div class="summary-row summary-total"><span>Total</span><span id="cartTotal">₦0</span></div>
-          <a href="/checkout.html" class="btn btn-primary btn-lg btn-block">Proceed to Checkout</a>
-          <a href="/shop.html" class="btn btn-outline btn-block">Continue Shopping</a>
-        </div>
+
+      <!-- Wishlist Products Grid -->
+      <div class="products-grid" id="wishlistProducts"></div>
+
+      <!-- Empty State -->
+      <div id="wishlistEmpty" style="display: none; text-align: center; padding: 4rem 0;">
+        <div style="font-size: 4rem; color: #e0e0e0; margin-bottom: 1.5rem;"><i class="far fa-heart"></i></div>
+        <h2 style="font-family: 'Playfair Display', serif; margin-bottom: 0.5rem;">Your Wishlist is Empty</h2>
+        <p style="color: var(--text-light); max-width: 400px; margin: 0 auto 1.5rem;">Browse our collection and tap the heart icon on any product to save it here for later.</p>
+        <a href="/shop.html" class="btn btn-primary"><i class="fas fa-shopping-bag"></i> Start Shopping</a>
       </div>
-      <div class="cart-empty" id="cartEmpty" style="display:none;">
-        <i class="fas fa-shopping-bag"></i>
-        <h2>Your cart is empty</h2>
-        <p>Looks like you haven't added any items to your cart yet.</p>
-        <a href="/shop.html" class="btn btn-primary btn-lg">Start Shopping</a>
+
+      <!-- Loading State -->
+      <div id="wishlistLoading" style="text-align: center; padding: 3rem 0;">
+        <div class="spinner" style="width: 40px; height: 40px; border: 3px solid #eee; border-top-color: var(--accent, #c9a96e); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem;"></div>
+        <p style="color: var(--text-light);">Loading your wishlist...</p>
       </div>
+
     </div>
   </section>
 
@@ -83,22 +88,39 @@
         <div class="footer-col footer-brand">
           <h3 class="footer-logo">URBAN HILT</h3>
           <p class="footer-tagline">Luxury Redefined</p>
+          <p class="footer-desc">Premium clothing and footwear for those who appreciate the finer things in life.</p>
           <div class="footer-socials">
             <a href="https://www.tiktok.com/@urbanhiltluxurywears" target="_blank"><i class="fab fa-tiktok"></i></a>
             <a href="https://www.instagram.com/urban_hilt" target="_blank"><i class="fab fa-instagram"></i></a>
             <a href="https://wa.me/2348146747883" target="_blank"><i class="fab fa-whatsapp"></i></a>
+            <a href="mailto:urbanhiltltd@gmail.com"><i class="fas fa-envelope"></i></a>
           </div>
         </div>
-        <div class="footer-col"><h4>Get in Touch</h4><ul class="footer-contact"><li><i class="fas fa-map-marker-alt"></i> 134/136 Broad Street, Lagos</li><li><i class="fas fa-phone"></i> <a href="tel:+2348146747883">+234 814 674 7883</a></li></ul></div>
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <ul><li><a href="/shop.html">Shop All</a></li><li><a href="/shop.html?filter=new">New Arrivals</a></li><li><a href="/contact.html">Contact Us</a></li></ul>
+        </div>
+        <div class="footer-col">
+          <h4>Customer Care</h4>
+          <ul><li><a href="/shipping.html">Shipping & Returns</a></li><li><a href="/size-guide.html">Size Guide</a></li><li><a href="/privacy.html">Privacy Policy</a></li><li><a href="/terms.html">Terms of Service</a></li></ul>
+        </div>
+        <div class="footer-col">
+          <h4>Get in Touch</h4>
+          <ul class="footer-contact">
+            <li><i class="fas fa-map-marker-alt"></i> 134/136 Broad Street, Lagos</li>
+            <li><i class="fas fa-phone"></i> <a href="tel:+2348146747883">+234 814 674 7883</a></li>
+            <li><i class="fas fa-envelope"></i> <a href="mailto:urbanhiltltd@gmail.com">urbanhiltltd@gmail.com</a></li>
+          </ul>
+        </div>
       </div>
       <div class="footer-bottom"><p>&copy; 2026 Urban Hilt Ltd. All rights reserved.</p></div>
     </div>
   </footer>
 
-  <a href="https://wa.me/2348146747883" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
+  <a href="https://wa.me/2348146747883?text=Hello%20Urban%20Hilt!" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
   <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
 
   <script src="/js/main.js"></script>
-  <script src="/js/cart.js"></script>
+  <script src="/js/wishlist.js"></script>
 </body>
 </html>

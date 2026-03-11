@@ -955,3 +955,116 @@ input, textarea, select, button { font-family: inherit; font-size: inherit; }
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .toast i { color: var(--accent); }
+
+/* ============================================
+   IMAGE ZOOM
+   ============================================ */
+.gallery-main { cursor: zoom-in; position: relative; overflow: hidden; }
+.gallery-main.zoomed { cursor: zoom-out; }
+.gallery-main.zoomed img { transform: scale(2); cursor: zoom-out; }
+.gallery-main img { transition: transform 0.3s ease; transform-origin: center center; }
+
+/* ============================================
+   REVIEWS
+   ============================================ */
+.reviews-section { padding: 60px 0; border-top: 1px solid var(--border); }
+.reviews-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; flex-wrap: wrap; gap: 20px; }
+.reviews-summary { display: flex; align-items: center; gap: 20px; }
+.reviews-avg { text-align: center; }
+.reviews-avg .big-rating { font-size: 3rem; font-weight: 700; font-family: var(--font-display); line-height: 1; }
+.reviews-avg .star-display { color: #f59e0b; font-size: 1.1rem; margin: 6px 0; }
+.reviews-avg .review-count { font-size: 0.85rem; color: var(--text-light); }
+.review-bars { display: flex; flex-direction: column; gap: 4px; }
+.review-bar { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
+.review-bar .bar-track { width: 120px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.review-bar .bar-fill { height: 100%; background: #f59e0b; border-radius: 4px; }
+.review-card { padding: 24px 0; border-bottom: 1px solid var(--border-light); }
+.review-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.review-card-author { font-weight: 600; font-size: 0.95rem; }
+.review-card-date { font-size: 0.8rem; color: var(--text-muted); }
+.review-card-stars { color: #f59e0b; font-size: 0.85rem; margin-bottom: 6px; }
+.review-card-title { font-weight: 600; margin-bottom: 6px; }
+.review-card-text { color: var(--text-light); font-size: 0.9rem; line-height: 1.7; }
+.review-verified { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--success); margin-top: 8px; }
+.review-form { background: var(--bg-alt); padding: 30px; border-radius: var(--radius-lg); margin-top: 30px; }
+.review-form h3 { font-family: var(--font-display); margin-bottom: 20px; }
+.star-input { display: flex; gap: 4px; margin-bottom: 16px; }
+.star-input i { font-size: 1.5rem; color: var(--border); cursor: pointer; transition: var(--transition); }
+.star-input i.active, .star-input i:hover { color: #f59e0b; }
+.review-list { max-height: 600px; overflow-y: auto; }
+
+/* ============================================
+   WISHLIST
+   ============================================ */
+.wishlist-btn { position: absolute; top: 12px; right: 12px; z-index: 3; width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.9); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--text-muted); transition: var(--transition); backdrop-filter: blur(4px); }
+.wishlist-btn:hover, .wishlist-btn.active { color: #e74c3c; background: var(--white); }
+.wishlist-btn.active i { font-weight: 900; }
+.product-detail .wishlist-detail-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border: 1px solid var(--border); border-radius: var(--radius); background: none; cursor: pointer; font-size: 0.85rem; transition: var(--transition); }
+.product-detail .wishlist-detail-btn:hover, .product-detail .wishlist-detail-btn.active { border-color: #e74c3c; color: #e74c3c; }
+
+/* ============================================
+   SIZE GUIDE TABLES
+   ============================================ */
+.size-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+.size-table th { background: var(--primary); color: var(--white); padding: 12px 16px; font-size: 0.8rem; letter-spacing: 1px; text-transform: uppercase; text-align: left; }
+.size-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+.size-table tr:hover td { background: var(--bg-alt); }
+.size-table .highlight { background: rgba(201,169,110,0.1); font-weight: 600; }
+
+/* ============================================
+   TRACKING
+   ============================================ */
+.tracking-form { max-width: 500px; margin: 0 auto 40px; display: flex; gap: 12px; }
+.tracking-form input { flex: 1; padding: 14px 16px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 1rem; outline: none; }
+.tracking-form input:focus { border-color: var(--accent); }
+.tracking-result { max-width: 700px; margin: 0 auto; }
+.tracking-progress { display: flex; justify-content: space-between; margin-bottom: 40px; position: relative; }
+.tracking-progress::before { content: ''; position: absolute; top: 20px; left: 0; right: 0; height: 3px; background: var(--border); }
+.tracking-progress .progress-fill { position: absolute; top: 20px; left: 0; height: 3px; background: var(--accent); transition: width 0.6s ease; }
+.tracking-step { text-align: center; position: relative; z-index: 2; flex: 1; }
+.tracking-step .step-dot { width: 40px; height: 40px; border-radius: 50%; background: var(--white); border: 3px solid var(--border); margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; transition: var(--transition); }
+.tracking-step.active .step-dot, .tracking-step.completed .step-dot { background: var(--accent); border-color: var(--accent); color: var(--white); }
+.tracking-step .step-label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+.tracking-step .step-date { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; }
+.tracking-info { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 30px; }
+.tracking-info h3 { font-family: var(--font-display); margin-bottom: 16px; }
+.tracking-info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-light); font-size: 0.9rem; }
+
+/* ============================================
+   ACCOUNT PAGES
+   ============================================ */
+.auth-container { max-width: 480px; margin: 0 auto; }
+.auth-tabs { display: flex; margin-bottom: 30px; border-bottom: 2px solid var(--border); }
+.auth-tab { flex: 1; padding: 14px; text-align: center; cursor: pointer; font-size: 0.85rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: var(--transition); }
+.auth-tab.active { color: var(--primary); border-bottom-color: var(--accent); }
+.auth-form { display: none; }
+.auth-form.active { display: block; }
+.profile-section { max-width: 800px; margin: 0 auto; }
+.profile-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 30px; margin-bottom: 24px; }
+.profile-card h3 { font-family: var(--font-display); margin-bottom: 16px; }
+.profile-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-light); }
+.profile-row span:first-child { color: var(--text-light); }
+
+/* ============================================
+   INFO PAGES (privacy, terms, shipping, size guide)
+   ============================================ */
+.info-content { max-width: 800px; margin: 0 auto; padding: 40px 0 80px; }
+.info-content h2 { font-family: var(--font-display); font-size: 1.5rem; margin: 40px 0 16px; color: var(--primary); }
+.info-content h3 { font-size: 1.1rem; margin: 24px 0 12px; }
+.info-content p, .info-content li { color: var(--text-light); line-height: 1.8; margin-bottom: 12px; font-size: 0.95rem; }
+.info-content ul { padding-left: 20px; }
+.info-content ul li { list-style: disc; margin-bottom: 8px; }
+.info-content .highlight-box { background: var(--bg-alt); border-left: 4px solid var(--accent); padding: 20px 24px; border-radius: 0 var(--radius) var(--radius) 0; margin: 20px 0; }
+.info-content .last-updated { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 30px; }
+
+/* Out of stock */
+.out-of-stock-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 3; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.out-of-stock-label { background: var(--primary); color: var(--white); padding: 8px 20px; font-size: 0.75rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+
+/* Product rating stars in cards */
+.product-card-rating { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.product-card-rating .stars { color: #f59e0b; font-size: 0.75rem; }
+.product-card-rating .count { font-size: 0.75rem; color: var(--text-muted); }
+
+/* Nav wishlist link */
+.nav-action-btn .wishlist-count { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; background: #e74c3c; color: var(--white); font-size: 0.65rem; font-weight: 700; border-radius: 50%; display: flex; align-items: center; justify-content: center; }

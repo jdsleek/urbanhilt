@@ -89,6 +89,50 @@ const UH = {
     }, 3000);
   },
 
+  getSessionId() {
+    let sid = localStorage.getItem('uh_session_id');
+    if (!sid) {
+      sid = 'sess_' + Date.now().toString(36) + Math.random().toString(36).substring(2);
+      localStorage.setItem('uh_session_id', sid);
+    }
+    return sid;
+  },
+
+  getWishlist() {
+    return JSON.parse(localStorage.getItem('uh_wishlist') || '[]');
+  },
+
+  async toggleWishlist(productId) {
+    const wishlist = this.getWishlist();
+    const idx = wishlist.indexOf(productId);
+    if (idx > -1) {
+      wishlist.splice(idx, 1);
+      await this.api(`/wishlist/${productId}?session_id=${this.getSessionId()}`, { method: 'DELETE' }).catch(() => {});
+      this.showToast('Removed from wishlist', 'fa-heart-broken');
+    } else {
+      wishlist.push(productId);
+      await this.api('/wishlist', { method: 'POST', body: JSON.stringify({ session_id: this.getSessionId(), product_id: productId }) }).catch(() => {});
+      this.showToast('Added to wishlist!', 'fa-heart');
+    }
+    localStorage.setItem('uh_wishlist', JSON.stringify(wishlist));
+    this.updateWishlistCount();
+    document.querySelectorAll(`.wishlist-btn[data-id="${productId}"]`).forEach(btn => btn.classList.toggle('active', wishlist.includes(productId)));
+    return wishlist.includes(productId);
+  },
+
+  isInWishlist(productId) {
+    return this.getWishlist().includes(productId);
+  },
+
+  updateWishlistCount() {
+    const count = this.getWishlist().length;
+    document.querySelectorAll('#wishlistCount').forEach(el => el.textContent = count);
+  },
+
+  getCustomerToken() {
+    return localStorage.getItem('uh_customer_token');
+  },
+
   productCardHTML(product) {
     const img = product.images?.[0];
     const imgHTML = img
@@ -104,11 +148,19 @@ const UH = {
       ? `<span class="current">${this.formatPrice(product.sale_price)}</span><span class="original">${this.formatPrice(product.price)}</span>`
       : `<span class="current">${this.formatPrice(product.price)}</span>`;
 
+    const outOfStock = product.stock === 0
+      ? '<div class="out-of-stock-overlay"><span class="out-of-stock-label">Out of Stock</span></div>'
+      : '';
+
+    const wishlistActive = UH.isInWishlist(product.id) ? 'active' : '';
+
     return `
       <div class="product-card reveal">
         <div class="product-card-image">
           ${imgHTML}
           <div class="product-badges">${badges}</div>
+          <button class="wishlist-btn ${wishlistActive}" data-id="${product.id}" onclick="UH.toggleWishlist(${product.id})"><i class="fas fa-heart"></i></button>
+          ${outOfStock}
           <div class="product-card-actions">
             <a href="/product.html?slug=${product.slug}" class="btn btn-white btn-sm">View Details</a>
           </div>
@@ -138,6 +190,7 @@ const UH = {
 
 document.addEventListener('DOMContentLoaded', () => {
   UH.updateCartCount();
+  UH.updateWishlistCount();
 
   // Preloader
   const preloader = document.getElementById('preloader');

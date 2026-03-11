@@ -88,6 +88,13 @@
                       <span>Order via WhatsApp</span>
                     </div>
                   </label>
+                  <label class="payment-option">
+                    <input type="radio" name="payment" value="paystack">
+                    <div class="payment-option-inner">
+                      <i class="fas fa-credit-card"></i>
+                      <span>Pay Online (Card)</span>
+                    </div>
+                  </label>
                 </div>
               </div>
               <div class="form-group" id="bankDetails" style="display:none;">
@@ -154,6 +161,7 @@
     </div>
   </footer>
 
+  <script src="https://js.paystack.co/v2/inline.js"></script>
   <script src="/js/main.js"></script>
   <script src="/js/checkout.js"></script>
 </body>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231a1a1a' width='100' height='100' rx='12'/><text x='50' y='68' font-family='serif' font-size='52' font-weight='bold' fill='%23c9a96e' text-anchor='middle'>UH</text></svg>">
+  <meta property="og:image" content="https://urbanhilt.up.railway.app/og-image.svg">
+  <title>Shipping & Returns — URBAN HILT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="announcement-bar">
+    <div class="announcement-slider">
+      <span>FREE SHIPPING ON ORDERS OVER ₦50,000</span>
+      <span>NEW COLLECTION JUST DROPPED — SHOP NOW</span>
+      <span>USE CODE <strong>URBANHILT10</strong> FOR 10% OFF YOUR FIRST ORDER</span>
+    </div>
+  </div>
+
+  <nav class="navbar navbar-light" id="navbar">
+    <div class="nav-container">
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+      <a href="/" class="nav-logo"><span class="logo-text">URBAN HILT</span></a>
+      <div class="nav-menu" id="navMenu">
+        <div class="nav-menu-inner">
+          <a href="/" class="nav-link">Home</a>
+          <a href="/shop.html" class="nav-link">Shop</a>
+          <div class="nav-dropdown">
+            <a href="#" class="nav-link nav-dropdown-trigger">Categories <i class="fas fa-chevron-down"></i></a>
+            <div class="nav-dropdown-menu" id="navCategories"></div>
+          </div>
+          <a href="/contact.html" class="nav-link">Contact</a>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <button class="nav-action-btn" id="searchToggle" aria-label="Search"><i class="fas fa-search"></i></button>
+        <a href="/cart.html" class="nav-action-btn cart-btn" aria-label="Cart"><i class="fas fa-shopping-bag"></i><span class="cart-count" id="cartCount">0</span></a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="search-overlay" id="searchOverlay">
+    <div class="search-overlay-inner">
+      <button class="search-close" id="searchClose"><i class="fas fa-times"></i></button>
+      <h2 class="search-title">What are you looking for?</h2>
+      <div class="search-input-wrap"><input type="text" id="searchInput" placeholder="Search products..." autocomplete="off"><i class="fas fa-search"></i></div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+  </div>
+
+  <section class="page-header">
+    <div class="container">
+      <div class="breadcrumb"><a href="/">Home</a> <span>/</span> <span>Shipping & Returns</span></div>
+      <h1 class="page-title">Shipping & Returns</h1>
+      <p class="page-subtitle">Everything you need to know about delivery and returns</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div style="max-width: 900px; margin: 0 auto;">
+
+        <!-- Shipping Rates -->
+        <h2 style="font-family: 'Playfair Display', serif; margin: 0 0 1.5rem;"><i class="fas fa-truck" style="margin-right: 0.5rem; color: var(--accent, #c9a96e);"></i> Shipping Information</h2>
+        <p>We deliver to all states across Nigeria. All orders are processed within 24 hours of payment confirmation.</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin: 1.5rem 0 2.5rem;">
+          <div style="background: var(--bg-warm, #faf8f5); padding: 2rem; border-radius: 8px; text-align: center;">
+            <div style="font-size: 2rem; color: var(--accent, #c9a96e); margin-bottom: 0.5rem;"><i class="fas fa-city"></i></div>
+            <h3 style="margin-bottom: 0.5rem;">Lagos Delivery</h3>
+            <p style="font-size: 1.5rem; font-weight: 600; margin-bottom: 0.3rem;">1–2 Days</p>
+            <p style="color: var(--text-light); font-size: 0.9rem;">₦2,500 flat rate</p>
+          </div>
+          <div style="background: var(--bg-warm, #faf8f5); padding: 2rem; border-radius: 8px; text-align: center;">
+            <div style="font-size: 2rem; color: var(--accent, #c9a96e); margin-bottom: 0.5rem;"><i class="fas fa-map-marked-alt"></i></div>
+            <h3 style="margin-bottom: 0.5rem;">Other States</h3>
+            <p style="font-size: 1.5rem; font-weight: 600; margin-bottom: 0.3rem;">3–5 Days</p>
+            <p style="color: var(--text-light); font-size: 0.9rem;">₦3,500 – ₦5,000</p>
+          </div>
+          <div style="background: var(--bg-warm, #faf8f5); padding: 2rem; border-radius: 8px; text-align: center;">
+            <div style="font-size: 2rem; color: var(--accent, #c9a96e); margin-bottom: 0.5rem;"><i class="fas fa-gift"></i></div>
+            <h3 style="margin-bottom: 0.5rem;">Free Shipping</h3>
+            <p style="font-size: 1.5rem; font-weight: 600; margin-bottom: 0.3rem;">₦50,000+</p>
+            <p style="color: var(--text-light); font-size: 0.9rem;">On orders above ₦50,000</p>
+          </div>
+        </div>
+
+        <div style="background: #fff8e1; border-left: 4px solid var(--accent, #c9a96e); padding: 1rem 1.5rem; border-radius: 0 8px 8px 0; margin-bottom: 3rem;">
+          <p style="margin: 0;"><strong>Note:</strong> Delivery timelines are estimates and may vary due to location accessibility or unforeseen logistics delays. You will receive tracking updates via WhatsApp once your order is dispatched.</p>
+        </div>
+
+        <!-- Track Your Order -->
+        <h2 style="font-family: 'Playfair Display', serif; margin: 2.5rem 0 1rem;"><i class="fas fa-search-location" style="margin-right: 0.5rem; color: var(--accent, #c9a96e);"></i> Track Your Order</h2>
+        <p>Enter your order number below to check the current status of your delivery.</p>
+        <form id="trackOrderForm" style="display: flex; gap: 1rem; margin: 1.5rem 0 3rem; flex-wrap: wrap;">
+          <input type="text" id="trackOrderInput" placeholder="Enter your order number (e.g. UH-20260301-XXXX)" required style="flex: 1; min-width: 250px; padding: 0.85rem 1.2rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; font-family: 'Inter', sans-serif;">
+          <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Track Order</button>
+        </form>
+
+        <!-- Return Policy -->
+        <h2 style="font-family: 'Playfair Display', serif; margin: 2.5rem 0 1rem;"><i class="fas fa-undo-alt" style="margin-right: 0.5rem; color: var(--accent, #c9a96e);"></i> Return Policy</h2>
+        <p>We want you to love your purchase. If something isn't right, we're here to help. Returns and exchanges are accepted within <strong>7 days</strong> of delivery.</p>
+
+        <h3 style="margin: 1.5rem 0 0.8rem;">Conditions for Returns</h3>
+        <ul style="margin: 0 0 1.5rem 1.5rem; line-height: 1.8;">
+          <li>Items must be <strong>unworn, unwashed, and undamaged</strong> with all original tags and packaging intact.</li>
+          <li>Proof of purchase (order confirmation or receipt) is required.</li>
+          <li>Items purchased during clearance sales are final and non-refundable unless defective.</li>
+          <li>Underwear, swimwear, and personalised items are not eligible for return due to hygiene reasons.</li>
+        </ul>
+
+        <!-- Exchange Process -->
+        <h2 style="font-family: 'Playfair Display', serif; margin: 2.5rem 0 1rem;"><i class="fas fa-exchange-alt" style="margin-right: 0.5rem; color: var(--accent, #c9a96e);"></i> Exchange Process</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin: 1.5rem 0;">
+          <div style="text-align: center; padding: 1.5rem;">
+            <div style="width: 50px; height: 50px; background: var(--accent, #c9a96e); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-weight: 700; font-size: 1.2rem;">1</div>
+            <h4 style="margin-bottom: 0.5rem;">Contact Us</h4>
+            <p style="color: var(--text-light); font-size: 0.9rem;">Reach out via WhatsApp or email within 7 days of delivery with your order number and reason.</p>
+          </div>
+          <div style="text-align: center; padding: 1.5rem;">
+            <div style="width: 50px; height: 50px; background: var(--accent, #c9a96e); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-weight: 700; font-size: 1.2rem;">2</div>
+            <h4 style="margin-bottom: 0.5rem;">Ship It Back</h4>
+            <p style="color: var(--text-light); font-size: 0.9rem;">Send the item back to our Lagos store. Return shipping costs are your responsibility unless the item is faulty.</p>
+          </div>
+          <div style="text-align: center; padding: 1.5rem;">
+            <div style="width: 50px; height: 50px; background: var(--accent, #c9a96e); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-weight: 700; font-size: 1.2rem;">3</div>
+            <h4 style="margin-bottom: 0.5rem;">Get Your Exchange</h4>
+            <p style="color: var(--text-light); font-size: 0.9rem;">Once we receive and inspect the item, we'll ship out the replacement within 2 business days.</p>
+          </div>
+        </div>
+
+        <!-- Refund Timeline -->
+        <h2 style="font-family: 'Playfair Display', serif; margin: 2.5rem 0 1rem;"><i class="fas fa-clock" style="margin-right: 0.5rem; color: var(--accent, #c9a96e);"></i> Refund Timeline</h2>
+        <div style="overflow-x: auto;">
+          <table class="size-table">
+            <thead>
+              <tr>
+                <th>Stage</th>
+                <th>Timeline</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Return Request</strong></td>
+                <td>Within 7 days</td>
+                <td>Contact us to initiate your return</td>
+              </tr>
+              <tr>
+                <td><strong>Item Inspection</strong></td>
+                <td>1–2 business days</td>
+                <td>We verify the item condition upon receipt</td>
+              </tr>
+              <tr>
+                <td><strong>Refund Processing</strong></td>
+                <td>3–5 business days</td>
+                <td>Refund issued to original payment method</td>
+              </tr>
+              <tr>
+                <td><strong>Bank Processing</strong></td>
+                <td>1–3 business days</td>
+                <td>Time for your bank to reflect the credit</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 0.5rem;">Total estimated refund time: 7–10 business days from when we receive the returned item.</p>
+
+        <!-- Contact CTA -->
+        <div style="background: var(--bg-warm, #faf8f5); padding: 2rem; border-radius: 8px; text-align: center; margin-top: 3rem;">
+          <h3 style="font-family: 'Playfair Display', serif; margin-bottom: 0.5rem;">Need Help?</h3>
+          <p style="color: var(--text-light); margin-bottom: 1rem;">Have questions about shipping or need to start a return? We're always here for you.</p>
+          <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <a href="https://wa.me/2348146747883?text=Hi%20Urban%20Hilt%2C%20I%20have%20a%20question%20about%20my%20order" class="btn btn-primary" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp Us</a>
+            <a href="/contact.html" class="btn btn-outline">Contact Page</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col footer-brand">
+          <h3 class="footer-logo">URBAN HILT</h3>
+          <p class="footer-tagline">Luxury Redefined</p>
+          <p class="footer-desc">Premium clothing and footwear for those who appreciate the finer things in life.</p>
+          <div class="footer-socials">
+            <a href="https://www.tiktok.com/@urbanhiltluxurywears" target="_blank"><i class="fab fa-tiktok"></i></a>
+            <a href="https://www.instagram.com/urban_hilt" target="_blank"><i class="fab fa-instagram"></i></a>
+            <a href="https://wa.me/2348146747883" target="_blank"><i class="fab fa-whatsapp"></i></a>
+            <a href="mailto:urbanhiltltd@gmail.com"><i class="fas fa-envelope"></i></a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <ul><li><a href="/shop.html">Shop All</a></li><li><a href="/shop.html?filter=new">New Arrivals</a></li><li><a href="/contact.html">Contact Us</a></li></ul>
+        </div>
+        <div class="footer-col">
+          <h4>Customer Care</h4>
+          <ul><li><a href="/shipping.html">Shipping & Returns</a></li><li><a href="/size-guide.html">Size Guide</a></li><li><a href="/privacy.html">Privacy Policy</a></li><li><a href="/terms.html">Terms of Service</a></li></ul>
+        </div>
+        <div class="footer-col">
+          <h4>Get in Touch</h4>
+          <ul class="footer-contact">
+            <li><i class="fas fa-map-marker-alt"></i> 134/136 Broad Street, Lagos</li>
+            <li><i class="fas fa-phone"></i> <a href="tel:+2348146747883">+234 814 674 7883</a></li>
+            <li><i class="fas fa-envelope"></i> <a href="mailto:urbanhiltltd@gmail.com">urbanhiltltd@gmail.com</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom"><p>&copy; 2026 Urban Hilt Ltd. All rights reserved.</p></div>
+    </div>
+  </footer>
+
+  <a href="https://wa.me/2348146747883?text=Hello%20Urban%20Hilt!" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
+  <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+
+  <script src="/js/main.js"></script>
+  <script>
+    document.getElementById('trackOrderForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const orderNumber = document.getElementById('trackOrderInput').value.trim();
+      if (orderNumber) {
+        window.location.href = '/track-order.html?order=' + encodeURIComponent(orderNumber);
+      }
+    });
+  </script>
+</body>
+</html>

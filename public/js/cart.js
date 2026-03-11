@@ -38,6 +38,7 @@ function renderCart() {
           <h4><a href="/product.html?slug=${item.slug}">${item.name}</a></h4>
           ${meta ? `<div class="cart-item-meta">${meta}</div>` : ''}
           <div class="cart-item-price">${UH.formatPrice(item.price)}</div>
+          <div class="stock-warning" id="stock-${item.key}" style="display:none;color:var(--danger);font-size:0.8rem;margin-top:4px;"></div>
           <div class="quantity-selector" style="margin-top:8px;">
             <button class="qty-btn" onclick="updateQty('${item.key}', ${item.qty - 1})">−</button>
             <input type="number" value="${item.qty}" min="1" max="10" class="qty-input"
@@ -56,6 +57,40 @@ function renderCart() {
   }).join('');
 
   updateSummary();
+  validateStock(cart);
+}
+
+async function validateStock(cart) {
+  try {
+    const items = cart.map(i => ({ product_id: i.id, qty: i.qty }));
+    const data = await UH.api('/validate-stock', {
+      method: 'POST',
+      body: JSON.stringify({ items })
+    });
+
+    if (data.warnings?.length) {
+      data.warnings.forEach(w => {
+        const el = document.getElementById(`stock-${w.key}`) ||
+          document.querySelector(`.cart-item[data-key*="${w.product_id}"] .stock-warning`);
+        if (el) {
+          el.style.display = 'block';
+          if (w.available === 0) {
+            el.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Out of stock';
+          } else {
+            el.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Only ${w.available} left in stock`;
+          }
+        }
+      });
+    }
+
+    const checkoutBtn = document.querySelector('.cart-summary .btn-primary');
+    if (checkoutBtn && data.warnings?.some(w => w.available === 0)) {
+      checkoutBtn.style.opacity = '0.6';
+      checkoutBtn.title = 'Some items are out of stock';
+    }
+  } catch (e) {
+    // Stock validation endpoint may not exist yet
+  }
 }
 
 function updateQty(key, qty) {
