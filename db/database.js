@@ -5,12 +5,15 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL.includes('localhost') || process.env.DATABASE_URL.includes('railway.internal')
-    ? false
-    : { rejectUnauthorized: false },
-});
+const dbUrl = process.env.DATABASE_URL;
+const needsSsl = !dbUrl.includes('localhost') && !dbUrl.includes('railway.internal');
+
+const poolConfig = { connectionString: dbUrl };
+if (needsSsl) {
+  poolConfig.ssl = { rejectUnauthorized: false };
+}
+
+const pool = new Pool(poolConfig);
 
 async function query(text, params) {
   return pool.query(text, params);
