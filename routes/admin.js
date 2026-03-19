@@ -29,19 +29,47 @@ const upload = multer({
 
 router.post('/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password } = req.body || {};
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
+    }
 
-    const { rows } = await query('SELECT * FROM admin_users WHERE username = $1', [username]);
+    const { rows } = await query('SELECT * FROM admin_users WHERE username = $1', [String(username).trim()]);
     const admin = rows[0];
     if (!admin) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const valid = bcrypt.compareSync(password, admin.password);
+    const hash = admin.password;
+    if (!hash || typeof hash !== 'string') {
+      console.error('admin login: missing password hash for user', username);
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    let valid = false;
+    try {
+      valid = bcrypt.compareSync(String(password), hash);
+    } catch (bcryptErr) {
+      console.error('admin login bcrypt:', bcryptErr.message);
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const token = jwt.sign({ id: admin.id, username: admin.username, role: admin.role }, JWT_SECRET, { expiresIn: '24h' });
-    res.json({ token, admin: { id: admin.id, username: admin.username, full_name: admin.full_name, role: admin.role } });
+    const payload = {
+      id: Number(admin.id),
+      username: String(admin.username),
+      role: String(admin.role || 'admin')
+    };
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' });
+    res.json({
+      token,
+      admin: {
+        id: payload.id,
+        username: payload.username,
+        full_name: admin.full_name || null,
+        role: payload.role
+      }
+    });
   } catch (e) {
-    console.error(e);
+    console.error('admin login error:', e.message || e);
     res.status(500).json({ error: 'Server error' });
   }
 });

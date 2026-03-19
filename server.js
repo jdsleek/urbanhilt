@@ -17,10 +17,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.use('/api', apiRoutes);
+// Mount admin API before /api so POST /api/admin/login is never swallowed by the public API router
 app.use('/api/admin', adminRoutes);
+app.use('/api', apiRoutes);
 
-app.get('/admin/*', (req, res) => {
+// Admin SPA (Express path '/admin/*' is not a glob — use a regex)
+app.get(/^\/admin(\/.*)?$/, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html'));
 });
 

@@ -4,6 +4,21 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { query } = require('../db/database');
 
+/** Avoid 500s when DB returns non-string JSON fields or malformed JSON */
+function parseJsonSafe(raw, fallback = []) {
+  if (raw == null || raw === '') return fallback;
+  if (typeof raw !== 'string') {
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw === 'object') return raw;
+    return fallback;
+  }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return fallback;
+  }
+}
+
 const JWT_SECRET = process.env.JWT_SECRET || 'urbanhilt-luxury-2024-secret-key';
 const CUSTOMER_SECRET = process.env.CUSTOMER_SECRET || 'uh-customer-secret-2024';
 
@@ -20,6 +35,17 @@ function authenticateCustomer(req, res, next) {
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 }
+
+// ==================== HEALTH (debug / load balancers) ====================
+router.get('/health', async (req, res) => {
+  try {
+    await query('SELECT 1');
+    res.json({ ok: true, database: true });
+  } catch (e) {
+    console.error('health check failed:', e.message || e);
+    res.status(503).json({ ok: false, database: false, error: 'Database unavailable' });
+  }
+});
 
 // ==================== PRODUCTS ====================
 router.get('/products', async (req, res) => {
@@ -62,9 +88,9 @@ router.get('/products', async (req, res) => {
     const { rows } = await query(mainQuery, params);
     const products = rows.map(p => ({
       ...p,
-      images: JSON.parse(p.images || '[]'),
-      sizes: JSON.parse(p.sizes || '[]'),
-      colors: JSON.parse(p.colors || '[]')
+      images: parseJsonSafe(p.images, []),
+      sizes: parseJsonSafe(p.sizes, []),
+      colors: parseJsonSafe(p.colors, [])
     }));
 
     res.json({ products, total });
@@ -84,16 +110,16 @@ router.get('/products/:slug', async (req, res) => {
 
     if (!product) return res.status(404).json({ error: 'Product not found' });
 
-    product.images = JSON.parse(product.images || '[]');
-    product.sizes = JSON.parse(product.sizes || '[]');
-    product.colors = JSON.parse(product.colors || '[]');
+    product.images = parseJsonSafe(product.images, []);
+    product.sizes = parseJsonSafe(product.sizes, []);
+    product.colors = parseJsonSafe(product.colors, []);
 
     const { rows: relatedRows } = await query(
       'SELECT * FROM products WHERE category_id = $1 AND id != $2 LIMIT 4',
       [product.category_id, product.id]
     );
     const related = relatedRows.map(p => ({
-      ...p, images: JSON.parse(p.images || '[]'), sizes: JSON.parse(p.sizes || '[]'), colors: JSON.parse(p.colors || '[]')
+      ...p, images: parseJsonSafe(p.images, []), sizes: parseJsonSafe(p.sizes, []), colors: parseJsonSafe(p.colors, [])
     }));
 
     const { rows: reviewRows } = await query(
@@ -214,7 +240,7 @@ router.get('/orders/track/:orderNumber', async (req, res) => {
     const order = rows[0];
     if (!order) return res.status(404).json({ error: 'Order not found' });
 
-    order.items = JSON.parse(order.items || '[]');
+    order.items = parseJsonSafe(order.items, []);
 
     res.json({
       order_number: order.order_number,
@@ -236,7 +262,7 @@ router.get('/orders/:orderNumber', async (req, res) => {
     const { rows } = await query('SELECT * FROM orders WHERE order_number = $1', [req.params.orderNumber]);
     const order = rows[0];
     if (!order) return res.status(404).json({ error: 'Order not found' });
-    order.items = JSON.parse(order.items || '[]');
+    order.items = parseJsonSafe(order.items, []);
     res.json({ order });
   } catch (e) {
     res.status(500).json({ error: 'Server error' });
@@ -321,7 +347,7 @@ router.get('/wishlist', async (req, res) => {
       WHERE w.session_id = $1 ORDER BY w.created_at DESC
     `, [session_id]);
     const items = rows.map(p => ({
-      ...p, images: JSON.parse(p.images || '[]'), sizes: JSON.parse(p.sizes || '[]'), colors: JSON.parse(p.colors || '[]')
+      ...p, images: parseJsonSafe(p.images, []), sizes: parseJsonSafe(p.sizes, []), colors: parseJsonSafe(p.colors, [])
     }));
 
     res.json({ items });
@@ -371,7 +397,7 @@ router.get('/wishlist/:sessionId', async (req, res) => {
       WHERE w.session_id = $1 ORDER BY w.created_at DESC
     `, [req.params.sessionId]);
     const items = rows.map(p => ({
-      ...p, images: JSON.parse(p.images || '[]'), sizes: JSON.parse(p.sizes || '[]'), colors: JSON.parse(p.colors || '[]')
+      ...p, images: parseJsonSafe(p.images, []), sizes: parseJsonSafe(p.sizes, []), colors: parseJsonSafe(p.colors, [])
     }));
     res.json({ items });
   } catch (e) {
@@ -413,7 +439,7 @@ router.get('/search', async (req, res) => {
       WHERE p.name ILIKE $1 OR p.description ILIKE $2 OR c.name ILIKE $3 LIMIT 20
     `, [`%${q}%`, `%${q}%`, `%${q}%`]);
     const products = rows.map(p => ({
-      ...p, images: JSON.parse(p.images || '[]'), sizes: JSON.parse(p.sizes || '[]'), colors: JSON.parse(p.colors || '[]')
+      ...p, images: parseJsonSafe(p.images, []), sizes: parseJsonSafe(p.sizes, []), colors: parseJsonSafe(p.colors, [])
     }));
     res.json({ products });
   } catch (e) {
@@ -475,7 +501,7 @@ router.get('/customers/orders', authenticateCustomer, async (req, res) => {
 
     const { rows: orderRows } = await query('SELECT * FROM orders WHERE customer_phone = $1 ORDER BY created_at DESC', [customer.phone]);
     const orders = orderRows.map(o => ({
-      ...o, items: JSON.parse(o.items || '[]')
+      ...o, items: parseJsonSafe(o.items, [])
     }));
 
     res.json({ orders });

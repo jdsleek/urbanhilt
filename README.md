@@ -43,9 +43,19 @@ Access the admin dashboard at **http://localhost:3000/admin/**
 - FAQ section
 - Contact page with all business details
 
+## Railway / production
+
+- Set **`DATABASE_URL`** on the **same** Railway service that runs this app (ideally use a Postgres plugin in the **same project** so `postgres.railway.internal` works).
+- Optional: **`JWT_SECRET`**, **`NODE_ENV=production`**
+- Health check: **`GET /api/health`** — should return `{"ok":true,"database":true}`
+
+### “Server error” on admin login but the site loads
+
+If you have **more than one** `*.up.railway.app` domain, they may point to **different deployments** (different IPs). Open **`/api/health`** on the URL you use for the store: if it returns `503`, that deployment has no working database. In Railway → **Networking**, attach your preferred public URL to the service that already has Postgres + `DATABASE_URL` configured (or add Postgres and `DATABASE_URL` to the failing service).
+
 ## Tech Stack
 - **Backend:** Node.js, Express.js
-- **Database:** SQLite (via better-sqlite3)
+- **Database:** PostgreSQL (`pg` + `DATABASE_URL`)
 - **Auth:** JWT (JSON Web Tokens) + bcrypt
 - **Frontend:** Vanilla HTML, CSS, JavaScript
 - **File Upload:** Multer

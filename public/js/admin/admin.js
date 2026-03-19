@@ -88,7 +88,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function handleLogin(e) {
   e.preventDefault();
-  const username = document.getElementById('loginUsername').value;
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+  const username = document.getElementById('loginUsername').value.trim();
   const password = document.getElementById('loginPassword').value;
 
   try {
@@ -97,7 +99,14 @@ async function handleLogin(e) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     });
-    const data = await res.json();
+    const text = await res.text();
+    let data = {};
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      errEl.textContent = 'Server returned an invalid response. Check deployment & database.';
+      return;
+    }
 
     if (data.token) {
       token = data.token;
@@ -105,10 +114,10 @@ async function handleLogin(e) {
       document.getElementById('adminName').textContent = data.admin.full_name || data.admin.username;
       showDashboard();
     } else {
-      document.getElementById('loginError').textContent = data.error || 'Invalid credentials';
+      errEl.textContent = data.error || (res.status === 401 ? 'Invalid credentials' : `Request failed (${res.status})`);
     }
   } catch (err) {
-    document.getElementById('loginError').textContent = 'Connection error. Please try again.';
+    errEl.textContent = 'Connection error. Please try again.';
   }
 }
 
