@@ -26,7 +26,11 @@ app.get(/^\/admin(\/.*)?$/, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html'));
 });
 
-app.get('*', (req, res) => {
+app.get('*', (req, res, next) => {
+  // Never treat /api/* as static or SPA — avoids returning HTML for unknown API paths
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
   const requestedFile = path.join(__dirname, 'public', req.path);
   res.sendFile(requestedFile, (err) => {
     if (err) {
