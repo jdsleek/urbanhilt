@@ -67,6 +67,7 @@ node scripts/godaddy-dns.js set-www --target YOUR_RAILWAY_CNAME.up.railway.app
 ## Railway / production
 
 - Set **`DATABASE_URL`** on the **same** Railway service that runs this app (ideally use a Postgres plugin in the **same project** so `postgres.railway.internal` works).
+- **Port:** On Railway, **`PORT` is usually `8080`** (the platform sets it). Don’t pin **`3000`** in Railway variables unless you know it matches — wrong port → **502** / “application failed to respond”.
 - Bulk-set vars from a local file (API token required): `npm run railway:set-env -- --env-file .env.railway` — see **`docs/RAILWAY-GITHUB-CLIENT.md`**, **`docs/CLIENT-RAILWAY.md`**, and **`scripts/railway-set-env.js`**.
 - On the deployment that serves **www.urbanhilt.com**, set **`PUBLIC_SITE_URL=https://www.urbanhilt.com`** (optional but recommended; exposed in `/api/store-config` as `siteUrl`).
 - Optional: **`JWT_SECRET`**, **`NODE_ENV=production`**

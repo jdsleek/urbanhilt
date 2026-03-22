@@ -77,7 +77,8 @@ if (!fs.existsSync(uploadDir)) {
       await seedDatabase();
     }
 
-    app.listen(PORT, () => {
+    // 0.0.0.0 required on Railway/Docker so the platform proxy can reach the process
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`\n  ╔══════════════════════════════════════════╗`);
       console.log(`  ║     URBAN HILT - Luxury Redefined        ║`);
       console.log(`  ║     Server running on port ${PORT}            ║`);

@@ -35,6 +35,8 @@ npm run railway:link-postgres
 
 Then wait for redeploy and check `https://www.urbanhilt.com/api/health` → `"database": true`.
 
+**502 / “Application failed to respond”:** Railway often expects **`PORT=8080`** (or whatever Railway sets — do **not** force `3000` in service variables unless it matches the platform). The Node app uses `process.env.PORT`; if it listens on the wrong port, the proxy never reaches the app.
+
 ## Custom domain via API (optional)
 
 ```bash
