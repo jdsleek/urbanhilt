@@ -15,7 +15,8 @@
     "railway:link-postgres": "node scripts/railway-link-postgres.js",
     "railway:materialize-db-url": "node scripts/railway-materialize-db-url.js",
     "migrate:db": "node scripts/migrate-db.js",
-    "railway:tcp-postgres": "node scripts/railway-tcp-postgres.js"
+    "railway:tcp-postgres": "node scripts/railway-tcp-postgres.js",
+    "railway:sync-git-deploy": "node scripts/railway-sync-git-deploy.js"
   },
   "keywords": [
     "ecommerce",

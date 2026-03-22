@@ -53,6 +53,18 @@ Same token + project id; service is auto-resolved. Or add the domain in **Railwa
 
 Set **`PUBLIC_SITE_URL=https://www.urbanhilt.com`** in the pushed vars so `/api/store-config` includes `siteUrl`.
 
+## Live site stuck on an old GitHub commit
+
+Symptoms: **GitHub `main` is ahead** (new routes, e.g. `GET /api/store-config`), but production still returns **`{"error":"Not found"}`** for those paths while older API routes work. Redeploy from the dashboard may keep the **same commit** if the service lost its GitHub trigger / stale link.
+
+Fix from this repo (uses `RAILWAY_TOKEN` + `RAILWAY_PROJECT_ID` in `.env`):
+
+```bash
+npm run railway:sync-git-deploy
+```
+
+This runs Railway’s **`serviceConnect`** for `jdsleek/urbanhilt` @ `main`, then **`serviceInstanceDeploy(..., latestCommit: true)`**. Override repo/branch with **`RAILWAY_GITHUB_REPO`** / **`RAILWAY_GITHUB_BRANCH`** if needed.
+
 ## Admin vs www — different data?
 
 If **Railway “View site”** shows new products but **www.urbanhilt.com** does not, you have **two deployments or two databases**. See **`docs/DATABASE-DOMAIN-MISMATCH.md`**. Run:
