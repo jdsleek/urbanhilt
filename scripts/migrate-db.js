@@ -44,10 +44,21 @@ const TABLES_ORDER = [
 ];
 
 function poolConfig(url) {
-  const needsSsl =
-    !url.includes('localhost') && !url.includes('railway.internal');
+  const u = String(url).replace(/^postgresql:/, 'postgres:');
+  let host = '';
+  try {
+    host = new URL(u).hostname;
+  } catch (_) {}
+  /** Railway TCP proxy (*.proxy.rlwy.net) does not use TLS — pg client must not request SSL */
+  const isRailwayTcpProxy = host.endsWith('proxy.rlwy.net');
+  const isLocal =
+    host === 'localhost' || host === '127.0.0.1' || url.includes('railway.internal');
   const c = { connectionString: url };
-  if (needsSsl) c.ssl = { rejectUnauthorized: false };
+  if (isRailwayTcpProxy) {
+    c.ssl = false;
+  } else if (!isLocal) {
+    c.ssl = { rejectUnauthorized: false };
+  }
   return c;
 }
 

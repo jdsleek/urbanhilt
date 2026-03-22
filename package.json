@@ -14,7 +14,8 @@
     "railway:diagnose": "node scripts/railway-diagnose-deployment.js",
     "railway:link-postgres": "node scripts/railway-link-postgres.js",
     "railway:materialize-db-url": "node scripts/railway-materialize-db-url.js",
-    "migrate:db": "node scripts/migrate-db.js"
+    "migrate:db": "node scripts/migrate-db.js",
+    "railway:tcp-postgres": "node scripts/railway-tcp-postgres.js"
   },
   "keywords": [
     "ecommerce",

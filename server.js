@@ -37,6 +37,26 @@ app.use((req, res, next) => {
   next();
 });
 
+// Register before static + /api router so production always exposes config (avoids 404 if router order/cache differs)
+app.get('/api/store-config', (req, res) => {
+  try {
+    const siteUrl = (process.env.PUBLIC_SITE_URL || '').replace(/\/$/, '');
+    res.json({
+      requireStaffCheckout: process.env.REQUIRE_STAFF_CHECKOUT === 'true',
+      customerSubmitStaffConfirms: process.env.REQUIRE_STAFF_CHECKOUT === 'true',
+      staffGateFullSite: process.env.STAFF_GATE_FULL_SITE === 'true',
+      paystackConfigured: !!(
+        process.env.PAYSTACK_PUBLIC_KEY &&
+        String(process.env.PAYSTACK_PUBLIC_KEY).startsWith('pk_')
+      ),
+      paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY || '',
+      siteUrl: siteUrl || null,
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
