@@ -324,6 +324,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Load categories in nav
   loadNavCategories();
+  initNavCategoryDropdown();
 
   // Back to top
   const backToTop = document.getElementById('backToTop');
@@ -360,4 +361,50 @@ async function loadNavCategories() {
   } catch (e) {
     navCats.innerHTML = '<a href="/shop.html">Shop</a>';
   }
+}
+
+/** Mobile / narrow: category submenu toggles; desktop keeps hover. Fixes “dropdown stuck open”. */
+function initNavCategoryDropdown() {
+  const mq = window.matchMedia('(max-width: 768px)');
+  const triggers = document.querySelectorAll('.nav-dropdown-trigger');
+
+  function closeAllNavDropdowns() {
+    document.querySelectorAll('.nav-dropdown.is-open').forEach((el) => {
+      el.classList.remove('is-open');
+      el.querySelector('.nav-dropdown-trigger')?.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  triggers.forEach((trigger) => {
+    trigger.setAttribute('aria-haspopup', 'true');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!mq.matches) return;
+      e.stopPropagation();
+      const dd = trigger.closest('.nav-dropdown');
+      if (!dd) return;
+      const willOpen = !dd.classList.contains('is-open');
+      closeAllNavDropdowns();
+      if (willOpen) {
+        dd.classList.add('is-open');
+        trigger.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!mq.matches) return;
+    if (e.target.closest('.nav-dropdown-menu a')) {
+      closeAllNavDropdowns();
+      return;
+    }
+    if (!e.target.closest('.nav-dropdown')) closeAllNavDropdowns();
+  });
+
+  mq.addEventListener('change', closeAllNavDropdowns);
+
+  document.getElementById('navToggle')?.addEventListener('click', () => {
+    closeAllNavDropdowns();
+  });
 }

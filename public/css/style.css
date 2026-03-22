@@ -952,7 +952,45 @@ input, textarea, select, button { font-family: inherit; font-size: inherit; }
   .nav-link { color: var(--text) !important; padding: 16px 0; font-size: 1.1rem; width: 100%; border-bottom: 1px solid var(--border-light); }
   .nav-link::after { display: none; }
   .nav-toggle { display: block; }
-  .nav-dropdown-menu { position: static; opacity: 1; visibility: visible; transform: none; box-shadow: none; padding-left: 20px; }
+  /* Collapsible category submenu (was always visible = “stuck open”) */
+  .nav-dropdown { width: 100%; }
+  .nav-dropdown-trigger { display: flex; justify-content: space-between; align-items: center; }
+  .nav-dropdown-menu {
+    position: static;
+    max-height: 0;
+    opacity: 0;
+    visibility: hidden;
+    overflow: hidden;
+    transform: none;
+    box-shadow: none;
+    padding: 0 0 0 20px;
+    margin: 0;
+    transition: max-height 0.35s ease, opacity 0.2s ease, padding 0.2s ease;
+  }
+  .nav-dropdown.is-open .nav-dropdown-menu {
+    max-height: min(70vh, 480px);
+    opacity: 1;
+    visibility: visible;
+    padding-top: 8px;
+    padding-bottom: 16px;
+  }
+  .nav-dropdown.is-open .nav-dropdown-trigger i { transform: rotate(180deg); }
+  /* Don’t let desktop :hover force the panel open on small screens */
+  .nav-dropdown:hover .nav-dropdown-menu {
+    max-height: 0;
+    opacity: 0;
+    visibility: hidden;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  .nav-dropdown.is-open:hover .nav-dropdown-menu,
+  .nav-dropdown.is-open .nav-dropdown-menu {
+    max-height: min(70vh, 480px);
+    opacity: 1;
+    visibility: visible;
+    padding-top: 8px;
+    padding-bottom: 16px;
+  }
   .announcement-bar { font-size: 0.65rem; letter-spacing: 1px; }
   .hero-actions { flex-direction: column; align-items: center; }
   .hero-actions .btn { width: 100%; max-width: 300px; }
