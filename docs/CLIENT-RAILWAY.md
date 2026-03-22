@@ -26,14 +26,20 @@ npm run railway:set-env -- --env-file .env.railway
 
 ### Live site has no database (`DATABASE_URL` missing)
 
-If the Node service never had `DATABASE_URL`, link it to the project’s **PostgreSQL** plugin (same as `${{Postgres.DATABASE_URL}}` in the dashboard):
+1. Try the reference (works when Railway resolves it):
 
 ```bash
 npm run railway:link-postgres
-# optional: --postgres-service-name "Postgres"  if you have several DB services
 ```
 
-Then wait for redeploy and check `https://www.urbanhilt.com/api/health` → `"database": true`.
+2. If deploy logs show **`DATABASE_URL environment variable is not set`** but the variable shows `${{Postgres.DATABASE_URL}}` in the dashboard, Railway may **not resolve** that reference for a **Postgres plugin** (no `DATABASE_URL` on the DB service). **Materialize** the internal URL from `POSTGRES_*` vars:
+
+```bash
+npm run railway:materialize-db-url
+```
+
+Then wait for redeploy and check `https://www.urbanhilt.com/api/health` → `"database": true`.  
+After using `materialize-db-url`, consider **rotating the Postgres password** in Railway (credentials were used to build the URL).
 
 **502 / “Application failed to respond”:** Railway often expects **`PORT=8080`** (or whatever Railway sets — do **not** force `3000` in service variables unless it matches the platform). The Node app uses `process.env.PORT`; if it listens on the wrong port, the proxy never reaches the app.
 

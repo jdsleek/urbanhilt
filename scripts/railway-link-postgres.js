@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Set DATABASE_URL on the Node (urbanhilt) service to Railway's cross-service reference
- * pointing at the project's PostgreSQL plugin — fixes live site with empty/missing DB.
+ * Set DATABASE_URL to ${{Postgres.DATABASE_URL}}. If Railway leaves runtime DATABASE_URL
+ * empty (common with Postgres *plugin* services), run `npm run railway:materialize-db-url`.
  *
  *   npm run railway:link-postgres
  *   npm run railway:link-postgres -- --dry-run
