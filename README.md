@@ -94,6 +94,14 @@ If you have **more than one** `*.up.railway.app` domain, they may point to **dif
 
 Admin and the shop use the **same** `DATABASE_URL` **per deployment**. If Railway **“View site”** shows new data but the **custom domain** does not, `www` is almost certainly hitting **another** service or **another** Postgres. See **`docs/DATABASE-DOMAIN-MISMATCH.md`** and run **`npm run railway:diagnose`** (optionally with **`--compare-url`** between your `*.railway.app` URL and `https://www.urbanhilt.com`).
 
+### “Some data still not showing” (images, orders, partial catalog)
+
+See **`docs/DATA-NOT-SHOWING.md`**. Quick same-DB check:
+
+```bash
+curl -s https://www.urbanhilt.com/api/catalog-counts
+```
+
 ## Tech Stack
 - **Backend:** Node.js, Express.js
 - **Database:** PostgreSQL (`pg` + `DATABASE_URL`)

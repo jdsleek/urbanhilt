@@ -59,3 +59,5 @@ curl -s "https://YOUR.railway.app/api/categories" | jq '.categories | length'
 ```
 
 Same number and same slugs → same DB. Different → dual-DB / dual-deploy problem.
+
+More causes (broken images after migrate, order filters, staff gate): **`docs/DATA-NOT-SHOWING.md`**.

@@ -39,6 +39,24 @@ router.get('/health', async (req, res) => {
   }
 });
 
+/** Public row counts — use to verify www vs *.railway.app (or admin) hit the same DB. */
+router.get('/catalog-counts', async (req, res) => {
+  try {
+    const [pr, cr] = await Promise.all([
+      query('SELECT COUNT(*)::int AS c FROM products'),
+      query('SELECT COUNT(*)::int AS c FROM categories'),
+    ]);
+    res.json({
+      ok: true,
+      products: pr.rows[0].c,
+      categories: cr.rows[0].c,
+    });
+  } catch (e) {
+    console.error('catalog-counts failed:', e.message || e);
+    res.status(503).json({ ok: false, error: 'Database unavailable' });
+  }
+});
+
 // ==================== PRODUCTS ====================
 router.get('/products', async (req, res) => {
   try {
