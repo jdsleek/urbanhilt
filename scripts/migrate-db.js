@@ -9,10 +9,14 @@
  *   database’s **public** connection string from Railway → Postgres → Connect.
  *
  * Usage:
- *   SOURCE_DATABASE_URL="postgres://..." TARGET_DATABASE_URL="postgres://..." node scripts/migrate-db.js --replace
+ *   SOURCE_DATABASE_URL="..." TARGET_DATABASE_URL="..." node scripts/migrate-db.js --replace
+ *   SOURCE_DATABASE_URL="..." TARGET_DATABASE_URL="..." node scripts/migrate-db.js --merge
  *
  * Options:
- *   --replace          TRUNCATE all app tables on TARGET (full replace). Required for clean copy.
+ *   --replace          TRUNCATE all app tables on TARGET, then copy (wipes existing target data).
+ *   --merge            Upsert from SOURCE into TARGET (no truncate). Keeps existing rows;
+ *                      same id/key is updated from source. Use this to restore without wiping
+ *                      data that only exists on the target.
  *   --dry-run          Show counts only, no writes.
  *   --rewrite-uploads-base https://old-app.up.railway.app
  *                      After copy, rewrite `/uploads/...` in categories.image and
@@ -69,6 +73,7 @@ function parseArgs() {
   const a = process.argv.slice(2);
   return {
     replace: a.includes('--replace'),
+    merge: a.includes('--merge'),
     dryRun: a.includes('--dry-run'),
     rewriteBase: (() => {
       const i = a.indexOf('--rewrite-uploads-base');
@@ -76,6 +81,30 @@ function parseArgs() {
       return a[i + 1].replace(/\/$/, '');
     })(),
   };
+}
+
+/** Primary key column for ON CONFLICT */
+function conflictColumn(table) {
+  if (table === 'site_settings') return 'key';
+  return 'id';
+}
+
+function buildUpsertSql(table, cols) {
+  const conflict = conflictColumn(table);
+  if (!cols.includes(conflict)) {
+    return null;
+  }
+  const colList = cols.map((c) => `"${c}"`).join(', ');
+  const ph = cols.map((_, i) => `$${i + 1}`).join(', ');
+  const updates = cols
+    .filter((c) => c !== conflict)
+    .map((c) => `"${c}" = EXCLUDED."${c}"`)
+    .join(', ');
+  const updateClause =
+    updates.length > 0
+      ? `DO UPDATE SET ${updates}`
+      : 'DO NOTHING';
+  return `INSERT INTO ${table} (${colList}) VALUES (${ph}) ON CONFLICT ("${conflict}") ${updateClause}`;
 }
 
 function rewriteUploadPathsInJson(jsonStr, base) {
@@ -119,9 +148,13 @@ async function main() {
     console.error('Source and target must differ.');
     process.exit(1);
   }
-  if (!args.replace && !args.dryRun) {
+  if (args.replace && args.merge) {
+    console.error('Use either --replace or --merge, not both.');
+    process.exit(1);
+  }
+  if (!args.replace && !args.merge && !args.dryRun) {
     console.error(
-      'Pass --replace to truncate target and copy, or --dry-run to inspect only.'
+      'Pass --replace (wipe target), --merge (upsert, keep target rows), or --dry-run.'
     );
     process.exit(1);
   }
@@ -149,23 +182,27 @@ async function main() {
     return;
   }
 
-  console.log('\nTRUNCATE target tables (CASCADE, RESTART IDENTITY)...');
-  await tgt.query(`
-    TRUNCATE
-      staff_access_logs,
-      wishlists,
-      reviews,
-      orders,
-      products,
-      categories,
-      sales_staff,
-      discount_codes,
-      customers,
-      newsletter_subscribers,
-      site_settings,
-      admin_users
-    RESTART IDENTITY CASCADE;
-  `);
+  if (args.replace) {
+    console.log('\nTRUNCATE target tables (CASCADE, RESTART IDENTITY)...');
+    await tgt.query(`
+      TRUNCATE
+        staff_access_logs,
+        wishlists,
+        reviews,
+        orders,
+        products,
+        categories,
+        sales_staff,
+        discount_codes,
+        customers,
+        newsletter_subscribers,
+        site_settings,
+        admin_users
+      RESTART IDENTITY CASCADE;
+    `);
+  } else {
+    console.log('\n--merge: no truncate (upserting from source into target)');
+  }
 
   let total = 0;
   for (const table of TABLES_ORDER) {
@@ -177,28 +214,46 @@ async function main() {
       continue;
     }
 
-    const { rows } = await src.query(
-      `SELECT ${cols.map((c) => `"${c}"`).join(', ')} FROM ${table} ORDER BY 1`
-    );
+    let rows;
+    try {
+      const res = await src.query(
+        `SELECT ${cols.map((c) => `"${c}"`).join(', ')} FROM ${table} ORDER BY 1`
+      );
+      rows = res.rows;
+    } catch (e) {
+      console.warn(`  skip ${table} (source: ${e.message})`);
+      continue;
+    }
     if (!rows.length) {
-      console.log(`  ${table}: 0 rows`);
+      console.log(`  ${table}: 0 rows from source`);
+      continue;
+    }
+
+    const colList = cols.map((c) => `"${c}"`).join(', ');
+    const upsertSql = args.merge ? buildUpsertSql(table, cols) : null;
+    if (args.merge && !upsertSql) {
+      console.warn(`  skip ${table} (merge needs PK column ${conflictColumn(table)})`);
       continue;
     }
 
     const ph = cols.map((_, i) => `$${i + 1}`).join(', ');
-    const colList = cols.map((c) => `"${c}"`).join(', ');
+    const insertSql = `INSERT INTO ${table} (${colList}) VALUES (${ph})`;
+
     for (const row of rows) {
       const vals = cols.map((c) => row[c]);
-      await tgt.query(
-        `INSERT INTO ${table} (${colList}) VALUES (${ph})`,
-        vals
-      );
+      if (args.merge) {
+        await tgt.query(upsertSql, vals);
+      } else {
+        await tgt.query(insertSql, vals);
+      }
     }
-    console.log(`  ${table}: ${rows.length} rows`);
+    console.log(
+      `  ${table}: ${rows.length} rows (${args.merge ? 'upserted' : 'inserted'})`
+    );
     total += rows.length;
   }
 
-  console.log(`\nCopied ${total} row inserts across tables.`);
+  console.log(`\nDone: ${total} row operations across tables.`);
 
   // Fix serial sequences after explicit id inserts
   for (const table of TABLES_ORDER) {

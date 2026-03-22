@@ -2,58 +2,64 @@
 
 The app stores **categories, products, orders, etc.** in PostgreSQL. **Uploaded** product images are stored as paths like `/uploads/xyz.jpg` on the server disk — the DB only holds those paths (or external URLs).
 
-## 1. Connection strings
+## 0. `postgres.railway.internal` will NOT work from your laptop
 
-Run the migration from your laptop (or any host) that can open **both** databases over the internet.
+Hosts like **`postgres.railway.internal`** only resolve **inside** Railway’s private network. From your Mac you will see **`getaddrinfo ENOTFOUND`**.
 
-- In **Railway** → **Postgres** service → **Connect** / **Variables**: copy the **public** `DATABASE_URL` (or host that is **not** `postgres.railway.internal`).
-- **Internal** URLs only work **inside** Railway; they will **fail** from your Mac.
+**Do this instead:** open the **old** Railway project → **Postgres** → **Connect** (or **Variables**) and copy the **public** connection URL (often `*.proxy.rlwy.net` or `containers-*.railway.app` with a **port**).
 
-You need:
+Use the same for the **client** DB if needed (public URL), or build the client URL from the **urbanhilt** service variables after deploy.
+
+## 1. Environment variables
 
 | Variable | Meaning |
 |----------|---------|
-| `SOURCE_DATABASE_URL` | Old project (where the client added real products). |
-| `TARGET_DATABASE_URL` | Client live project (where `www.urbanhilt.com` points). |
+| `SOURCE_DATABASE_URL` | Old database (**public** URL from dashboard). |
+| `TARGET_DATABASE_URL` | Client live database (**public** URL, or internal only if you run the script **inside** Railway). |
 
 ## 2. Dry run (row counts)
 
 ```bash
-export SOURCE_DATABASE_URL='postgres://...old...'
-export TARGET_DATABASE_URL='postgres://...client...'
+export SOURCE_DATABASE_URL='postgres://...old PUBLIC...'
+export TARGET_DATABASE_URL='postgres://...client PUBLIC...'
 node scripts/migrate-db.js --dry-run
 ```
 
-## 3. Full copy (replaces all data on target)
+## 3. Restore / merge (**does not delete** existing target rows)
 
-**Warning:** `--replace` **truncates** all listed tables on the **target** (orders, customers, products, categories, admin users, staff, discounts, etc.).
+Use **`--merge`** to **upsert** every row from the source into the target:
 
-```bash
-export SOURCE_DATABASE_URL='postgres://...old...'
-export TARGET_DATABASE_URL='postgres://...client...'
-node scripts/migrate-db.js --replace
-```
-
-## 4. Images that live under `/uploads/`
-
-Those files are **not** inside Postgres.
-
-**Option A — Quick:** Point image paths at the **old** public app URL so the new site loads images from the old deployment until you move files:
+- Rows with the **same `id`** (or **`key`** for `site_settings`) are **updated** from the source.
+- Rows that exist **only** on the target are **left as-is** (nothing “away” / extra tracking data is wiped by this mode).
+- No `TRUNCATE`.
 
 ```bash
 export SOURCE_DATABASE_URL='...'
 export TARGET_DATABASE_URL='...'
-node scripts/migrate-db.js --replace --rewrite-uploads-base https://YOUR-OLD-SERVICE.up.railway.app
+node scripts/migrate-db.js --merge
 ```
 
-**Option B — Proper:** Copy the `uploads/` folder from the old deployment to the new one (same paths), then **do not** use `--rewrite-uploads-base`. On Railway you may use volume backup/restore or redeploy with files — depends on your setup.
+Optional: add **`--rewrite-uploads-base https://OLD-SERVICE.up.railway.app`** so `/uploads/...` paths still load from the old app until you copy files.
 
-External image URLs (e.g. Unsplash) in the DB are unchanged and keep working.
+If you hit **unique** errors (e.g. duplicate **slug** on products with different ids), resolve conflicts in SQL or use `--replace` on a **backup** first.
 
-## 5. After migration
+## 4. Full replace (**wipes** target tables)
 
-- Redeploy or restart the **client** Node service if needed.
-- Check `https://www.urbanhilt.com/api/categories` and a few product pages.
-- If **admin** password came from the old DB, log in with that password; otherwise reset via seed or SQL.
+**Warning:** **`--replace`** truncates all listed tables on the **target** (orders, customers, products, categories, admin users, staff, discounts, etc.).
 
-Never commit `SOURCE_DATABASE_URL` / `TARGET_DATABASE_URL` or paste them into public chats.
+```bash
+node scripts/migrate-db.js --replace
+```
+
+## 5. Images under `/uploads/`
+
+Those files are **not** in Postgres. Use **`--rewrite-uploads-base`** (see §3) or copy the **`uploads/`** folder to the new service.
+
+## 6. After migration
+
+- Redeploy the **client** `urbanhilt` service if needed (so code matches `main`, e.g. `/api/store-config`).
+- Check `https://www.urbanhilt.com/api/health` and `/api/categories`.
+
+## 7. Security
+
+Never commit database URLs or paste them into chat/AI. **Rotate** any Postgres password that was ever exposed.
