@@ -43,6 +43,27 @@ Access the admin dashboard at **http://localhost:3000/admin/**
 - FAQ section
 - Contact page with all business details
 
+## Custom domain (GoDaddy + Railway)
+
+**Do not paste GoDaddy API keys into chat.** Use a local `.env` only.
+
+1. In **Railway** → your web service → **Custom domains**: add `www.yourdomain.com` (and apex if offered). Copy the **CNAME target** (e.g. `xxxx.up.railway.app`).
+2. In **GoDaddy** [API keys](https://developer.godaddy.com/keys), create a key with **DNS** access for your domain.
+3. Locally:
+
+```bash
+cp .env.example .env
+# Edit .env: GODADDY_KEY, GODADDY_SECRET, GODADDY_DOMAIN
+npm install
+node scripts/godaddy-dns.js list
+node scripts/godaddy-dns.js set-www --target YOUR_RAILWAY_CNAME.up.railway.app
+# Optional: remove old GitHub Pages apex A records, then set apex only if Railway tells you to:
+# node scripts/godaddy-dns.js remove-apex-a
+# node scripts/godaddy-dns.js set-apex-a --ips 1.2.3.4
+```
+
+4. Wait for DNS + Railway certificate (often 5–30 minutes). Check `https://www.yourdomain.com/api/health`.
+
 ## Railway / production
 
 - Set **`DATABASE_URL`** on the **same** Railway service that runs this app (ideally use a Postgres plugin in the **same project** so `postgres.railway.internal` works).

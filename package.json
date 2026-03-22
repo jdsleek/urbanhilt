@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "seed": "node db/seed.js"
+    "seed": "node db/seed.js",
+    "dns:list": "node scripts/godaddy-dns.js list",
+    "dns:set-www": "node scripts/godaddy-dns.js set-www"
   },
   "keywords": [
     "ecommerce",
@@ -23,5 +25,8 @@
     "multer": "^1.4.5-lts.1",
     "pg": "^8.20.0",
     "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.5"
   }
 }
