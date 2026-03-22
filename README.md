@@ -88,6 +88,10 @@ node scripts/godaddy-dns.js set-www --target YOUR_RAILWAY_CNAME.up.railway.app
 
 If you have **more than one** `*.up.railway.app` domain, they may point to **different deployments** (different IPs). Open **`/api/health`** on the URL you use for the store: if it returns `503`, that deployment has no working database. In Railway → **Networking**, attach your preferred public URL to the service that already has Postgres + `DATABASE_URL` configured (or add Postgres and `DATABASE_URL` to the failing service).
 
+### New categories/products in Admin, but not on www.urbanhilt.com
+
+Admin and the shop use the **same** `DATABASE_URL` **per deployment**. If Railway **“View site”** shows new data but the **custom domain** does not, `www` is almost certainly hitting **another** service or **another** Postgres. See **`docs/DATABASE-DOMAIN-MISMATCH.md`** and run **`npm run railway:diagnose`** (optionally with **`--compare-url`** between your `*.railway.app` URL and `https://www.urbanhilt.com`).
+
 ## Tech Stack
 - **Backend:** Node.js, Express.js
 - **Database:** PostgreSQL (`pg` + `DATABASE_URL`)
