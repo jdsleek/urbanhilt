@@ -9,6 +9,13 @@ const adminRoutes = require('./routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+process.on('unhandledRejection', (reason, p) => {
+  console.error('  ✗ Unhandled Rejection at:', p, 'reason:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('  ✗ Uncaught Exception:', err && err.stack ? err.stack : err);
+});
 const IS_PRODUCTION =
   process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT === 'production';
 

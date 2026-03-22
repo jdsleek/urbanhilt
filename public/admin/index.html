@@ -228,6 +228,10 @@
       <form id="productForm" enctype="multipart/form-data">
         <input type="hidden" id="productId">
         <div class="modal-body">
+          <div id="productCopyHint" class="admin-copy-hint" hidden>
+            <i class="fas fa-clone" aria-hidden="true"></i>
+            <p><strong>New product</strong> — photos and fields are copied from the original. Update the <strong>name</strong> and <strong>SKU</strong> (URL slug is generated automatically and stays unique).</p>
+          </div>
           <div class="form-row form-row-2">
             <div class="form-group"><label>Product Name *</label><input type="text" id="prodName" required></div>
             <div class="form-group"><label>SKU</label><input type="text" id="prodSku"></div>
@@ -266,7 +270,11 @@
             </div>
           </div>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer modal-footer-product">
+          <button type="button" class="btn btn-outline btn-duplicate-from-modal" id="duplicateProductFromModal" hidden>
+            <i class="fas fa-clone"></i> Duplicate as new
+          </button>
+          <span class="modal-footer-flex-spacer" aria-hidden="true"></span>
           <button type="button" class="btn btn-outline" id="cancelProduct">Cancel</button>
           <button type="submit" class="btn btn-primary" id="saveProduct">Save Product</button>
         </div>

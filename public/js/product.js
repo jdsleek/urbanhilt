@@ -138,6 +138,7 @@ async function loadProduct(slug) {
 function setupGallery(images) {
   const mainImg = document.getElementById('mainImage');
   const thumbs = document.getElementById('galleryThumbs');
+  if (!mainImg) return;
 
   if (!images?.length) {
     mainImg.style.display = 'none';
@@ -213,7 +214,8 @@ async function loadReviews(slug) {
     const data = await UH.api(`/products/${slug}/reviews`);
     const reviews = data.reviews || [];
 
-    if (!reviews.length && !data.avg_rating) {
+    const avgRating = data.average_rating ?? data.avg_rating;
+    if (!reviews.length && !(avgRating > 0)) {
       section.innerHTML = `
         <div class="container">
           <div class="reviews-header">
@@ -227,8 +229,9 @@ async function loadReviews(slug) {
       return;
     }
 
-    const avg = (data.avg_rating || 0).toFixed(1);
-    const total = data.total || reviews.length;
+    const avgNum = Number(avgRating) || 0;
+    const avg = avgNum.toFixed(1);
+    const total = data.total ?? data.count ?? reviews.length;
     const dist = data.distribution || {};
 
     section.innerHTML = `
@@ -237,7 +240,7 @@ async function loadReviews(slug) {
           <div class="reviews-summary">
             <div class="reviews-avg">
               <div class="big-rating">${avg}</div>
-              <div class="star-display">${renderStars(Math.round(data.avg_rating || 0))}</div>
+              <div class="star-display">${renderStars(Math.round(avgNum))}</div>
               <div class="review-count">${total} review${total !== 1 ? 's' : ''}</div>
             </div>
             <div class="review-bars">
@@ -250,18 +253,23 @@ async function loadReviews(slug) {
           </div>
         </div>
         <div class="review-list">
-          ${reviews.map(r => `
+          ${reviews.map(r => {
+            const author = r.customer_name || r.author || 'Anonymous';
+            const reviewText = r.comment != null && r.comment !== '' ? r.comment : r.text || '';
+            const reviewDate = r.created_at || r.date;
+            return `
             <div class="review-card">
               <div class="review-card-header">
-                <span class="review-card-author">${r.author || 'Anonymous'}</span>
-                <span class="review-card-date">${r.date ? new Date(r.date).toLocaleDateString('en-NG', { year: 'numeric', month: 'short', day: 'numeric' }) : ''}</span>
+                <span class="review-card-author">${author}</span>
+                <span class="review-card-date">${reviewDate ? new Date(reviewDate).toLocaleDateString('en-NG', { year: 'numeric', month: 'short', day: 'numeric' }) : ''}</span>
               </div>
               <div class="review-card-stars">${renderStars(r.rating)}</div>
               ${r.title ? `<div class="review-card-title">${r.title}</div>` : ''}
-              <div class="review-card-text">${r.text || ''}</div>
+              <div class="review-card-text">${reviewText}</div>
               ${r.verified ? '<div class="review-verified"><i class="fas fa-check-circle"></i> Verified Purchase</div>' : ''}
             </div>
-          `).join('')}
+          `;
+          }).join('')}
         </div>
         ${renderReviewForm(slug)}
       </div>
@@ -337,16 +345,19 @@ function initReviewForm(slug) {
       }
       const reviewData = {
         rating: selectedRating,
-        author: document.getElementById('reviewAuthor').value.trim(),
+        customer_name: document.getElementById('reviewAuthor').value.trim(),
         title: document.getElementById('reviewTitle').value.trim(),
-        text: document.getElementById('reviewText').value.trim(),
-        product_slug: slug
+        comment: document.getElementById('reviewText').value.trim(),
       };
       try {
-        await UH.api(`/products/${slug}/reviews`, {
+        const result = await UH.api(`/products/${slug}/reviews`, {
           method: 'POST',
           body: JSON.stringify(reviewData)
         });
+        if (result.error) {
+          UH.showToast(result.error || 'Failed to submit review.', 'fa-exclamation-circle');
+          return;
+        }
         UH.showToast('Review submitted! Thank you.');
         loadReviews(slug);
       } catch (err) {

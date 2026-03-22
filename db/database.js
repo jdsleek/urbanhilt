@@ -15,6 +15,11 @@ if (needsSsl) {
 
 const pool = new Pool(poolConfig);
 
+// Prevent process crash when DB drops idle connections (Railway / pooler restarts)
+pool.on('error', (err) => {
+  console.error('  ✗ PostgreSQL pool error (idle client):', err.message || err);
+});
+
 async function query(text, params) {
   return pool.query(text, params);
 }

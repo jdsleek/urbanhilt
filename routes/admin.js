@@ -10,6 +10,28 @@ const { authenticateAdmin, JWT_SECRET } = require('../middleware/auth');
 const { finalizeAwaitingOrder } = require('../lib/orderFinalize');
 const { parseJsonSafe } = require('../lib/parseJsonSafe');
 
+function slugifyProductName(name) {
+  return (
+    String(name || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '') || 'product'
+  );
+}
+
+/** Avoid unique constraint errors when names slug to the same value (e.g. duplicates). */
+async function allocateUniqueProductSlug(name) {
+  const base = slugifyProductName(name);
+  let slug = base;
+  let counter = 0;
+  for (;;) {
+    const { rows } = await query('SELECT id FROM products WHERE slug = $1 LIMIT 1', [slug]);
+    if (!rows.length) return slug;
+    counter += 1;
+    slug = `${base}-${counter}`;
+  }
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'uploads')),
   filename: (req, file, cb) => {
@@ -153,7 +175,7 @@ router.post('/products', authenticateAdmin, upload.array('images', 6), async (re
   try {
     const { name, description, price, sale_price, category_id, sizes, colors, featured, new_arrival, best_seller, stock, sku } = req.body;
 
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = await allocateUniqueProductSlug(name);
     const images = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
 
     let parsedSizes = sizes || '[]';
@@ -161,7 +183,7 @@ router.post('/products', authenticateAdmin, upload.array('images', 6), async (re
     try { if (typeof sizes === 'string' && !sizes.startsWith('[')) parsedSizes = JSON.stringify(sizes.split(',')); } catch (e) {}
     try { if (typeof colors === 'string' && !colors.startsWith('[')) parsedColors = JSON.stringify(colors.split(',')); } catch (e) {}
 
-    const existingImages = req.body.existing_images ? JSON.parse(req.body.existing_images) : [];
+    const existingImages = parseJsonSafe(req.body.existing_images, []);
     const allImages = [...existingImages, ...images];
 
     const result = await query(`
@@ -191,9 +213,16 @@ router.put('/products/:id', authenticateAdmin, upload.array('images', 6), async 
     const existing = rows[0];
     if (!existing) return res.status(404).json({ error: 'Product not found' });
 
-    const slug = name ? name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : existing.slug;
+    let slug = name ? slugifyProductName(name) : existing.slug;
+    if (name && slug !== existing.slug) {
+      const { rows: clash } = await query('SELECT id FROM products WHERE slug = $1 AND id != $2 LIMIT 1', [slug, id]);
+      if (clash.length) slug = await allocateUniqueProductSlug(name);
+    }
     const newImages = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
-    const existingImages = req.body.existing_images ? JSON.parse(req.body.existing_images) : JSON.parse(existing.images || '[]');
+    const existingImages = parseJsonSafe(
+      req.body.existing_images,
+      parseJsonSafe(existing.images, [])
+    );
     const allImages = [...existingImages, ...newImages];
 
     let parsedSizes = sizes || existing.sizes;

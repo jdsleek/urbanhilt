@@ -21,7 +21,21 @@ const UH = {
       } catch (e) { /* sessionStorage blocked */ }
     }
     const res = await fetch(this.API + endpoint, { ...fetchOpts, headers });
-    return res.json();
+    const text = await res.text();
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      console.warn('[UH.api] Non-JSON response', endpoint, res.status, text?.slice(0, 120));
+      return {
+        error: 'Server returned an invalid response',
+        _httpStatus: res.status,
+      };
+    }
+    if (!res.ok && data.error == null && data.message == null) {
+      data.error = `Request failed (${res.status})`;
+    }
+    return data;
   },
 
   copyToClipboard(text) {

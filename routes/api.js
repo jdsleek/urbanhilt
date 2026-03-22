@@ -176,12 +176,18 @@ router.post('/products/:slug/reviews', async (req, res) => {
     const product = productRows[0];
     if (!product) return res.status(404).json({ error: 'Product not found' });
 
-    const { customer_name, rating, title, comment } = req.body;
+    // Frontend sends author/text; API historically used customer_name/comment
+    const customer_name = req.body.customer_name || req.body.author;
+    const comment =
+      req.body.comment !== undefined && req.body.comment !== null
+        ? req.body.comment
+        : req.body.text;
+    const { rating, title } = req.body;
     if (!customer_name || !rating) return res.status(400).json({ error: 'Missing required fields' });
 
     await query(
       'INSERT INTO reviews (product_id, customer_name, rating, title, comment) VALUES ($1, $2, $3, $4, $5)',
-      [product.id, customer_name, Math.min(5, Math.max(1, parseInt(rating))), title || '', comment || '']
+      [product.id, customer_name, Math.min(5, Math.max(1, parseInt(rating))), title || '', String(comment || '')]
     );
 
     res.status(201).json({ message: 'Review submitted!' });

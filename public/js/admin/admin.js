@@ -81,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('closeProductModal')?.addEventListener('click', closeProductModal);
   document.getElementById('cancelProduct')?.addEventListener('click', closeProductModal);
   document.getElementById('productForm')?.addEventListener('submit', handleSaveProduct);
+  document.getElementById('duplicateProductFromModal')?.addEventListener('click', duplicateFromOpenEditor);
 
   // Image upload
   const uploadArea = document.getElementById('imageUploadArea');
@@ -322,8 +323,9 @@ async function loadProducts() {
         <td>${p.featured ? '<i class="fas fa-star" style="color:#c9a96e;"></i>' : '—'}</td>
         <td>
           <div class="action-btns">
-            <button class="action-btn" onclick="editProduct(${p.id})" title="Edit"><i class="fas fa-edit"></i></button>
-            <button class="action-btn delete" onclick="deleteProduct(${p.id})" title="Delete"><i class="fas fa-trash"></i></button>
+            <button type="button" class="action-btn" onclick="duplicateProduct(${p.id})" title="Duplicate — copy as new product"><i class="fas fa-clone"></i></button>
+            <button type="button" class="action-btn" onclick="editProduct(${p.id})" title="Edit"><i class="fas fa-edit"></i></button>
+            <button type="button" class="action-btn delete" onclick="deleteProduct(${p.id})" title="Delete"><i class="fas fa-trash"></i></button>
           </div>
         </td>
       </tr>
@@ -718,31 +720,75 @@ async function loadStaffLogs() {
   `).join('') || '<tr><td colspan="5" style="text-align:center;color:#999;">No log entries yet</td></tr>';
 }
 
+function adminFlagChecked(v) {
+  return v === true || v === 1 || v === '1';
+}
+
+/** Strip trailing " (Copy)" / " (Copy 2)" and add a single " (Copy)" for the new draft name. */
+function nextCopyDisplayName(name) {
+  const t = (name || '').trim();
+  const m = t.match(/^(.+?)(\s*\(Copy(?:\s+\d+)?\)\s*)$/i);
+  const base = (m ? m[1] : t).trim() || 'Product';
+  return `${base} (Copy)`;
+}
+
+/** Append -COPY or bump -COPY2, -COPY3… for duplicated SKUs. */
+function nextCopySku(sku) {
+  const s = (sku || '').trim();
+  if (!s) return '';
+  const m = s.match(/^(.*?)(-COPY)(\d*)$/i);
+  if (m) {
+    const n = m[3] ? parseInt(m[3], 10) + 1 : 2;
+    return `${m[1]}-COPY${n}`;
+  }
+  return `${s}-COPY`;
+}
+
 // Product CRUD
-async function openProductModal(product = null) {
-  currentEditProduct = product;
+async function openProductModal(product = null, options = {}) {
+  const asCopy = options.asCopy === true;
+  currentEditProduct = asCopy ? null : product;
   existingProductImages = [];
-  document.getElementById('productModalTitle').textContent = product ? 'Edit Product' : 'Add Product';
-  document.getElementById('productId').value = product?.id || '';
-  document.getElementById('prodName').value = product?.name || '';
+
+  const hint = document.getElementById('productCopyHint');
+  const dupBtn = document.getElementById('duplicateProductFromModal');
+  if (hint) {
+    hint.hidden = !asCopy;
+  }
+  if (dupBtn) {
+    dupBtn.hidden = asCopy || !product?.id;
+  }
+
+  document.getElementById('productModalTitle').textContent = asCopy
+    ? 'Duplicate product'
+    : (product ? 'Edit Product' : 'Add Product');
+  document.getElementById('productId').value = asCopy ? '' : (product?.id || '');
+
+  let nameVal = product?.name || '';
+  if (asCopy && nameVal) nameVal = nextCopyDisplayName(nameVal);
+  document.getElementById('prodName').value = nameVal;
   document.getElementById('prodDesc').value = product?.description || '';
-  document.getElementById('prodPrice').value = product?.price || '';
-  document.getElementById('prodSalePrice').value = product?.sale_price || '';
-  document.getElementById('prodStock').value = product?.stock || 0;
-  document.getElementById('prodSku').value = product?.sku || '';
-  document.getElementById('prodFeatured').checked = product?.featured || false;
-  document.getElementById('prodNewArrival').checked = product?.new_arrival || false;
-  document.getElementById('prodBestSeller').checked = product?.best_seller || false;
-  document.getElementById('prodSizes').value = product?.sizes?.join(', ') || '';
-  document.getElementById('prodColors').value = product?.colors?.join(', ') || '';
+  document.getElementById('prodPrice').value = product?.price ?? '';
+  document.getElementById('prodSalePrice').value = product?.sale_price ?? '';
+  document.getElementById('prodStock').value = product?.stock ?? 0;
+  document.getElementById('prodSku').value = asCopy ? nextCopySku(product?.sku) : (product?.sku || '');
+  document.getElementById('prodFeatured').checked = adminFlagChecked(product?.featured);
+  document.getElementById('prodNewArrival').checked = adminFlagChecked(product?.new_arrival);
+  document.getElementById('prodBestSeller').checked = adminFlagChecked(product?.best_seller);
+
+  const sizesArr = Array.isArray(product?.sizes) ? product.sizes : [];
+  const colorsArr = Array.isArray(product?.colors) ? product.colors : [];
+  document.getElementById('prodSizes').value = sizesArr.length ? sizesArr.join(', ') : (product?.sizes || '');
+  document.getElementById('prodColors').value = colorsArr.length ? colorsArr.join(', ') : (product?.colors || '');
 
   // Load categories into dropdown
   const catData = await apiCall('/categories');
   const catSelect = document.getElementById('prodCategory');
+  const cid = product?.category_id;
   catSelect.innerHTML = '<option value="">Select Category</option>' +
-    (catData?.categories?.map(c => `<option value="${c.id}" ${product?.category_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('') || '');
+    (catData?.categories?.map(c => `<option value="${c.id}" ${cid != null && String(c.id) === String(cid) ? 'selected' : ''}>${c.name}</option>`).join('') || '');
 
-  // Show existing images
+  // Show existing images (reuse same URLs — no re-upload when saving a copy)
   const previews = document.getElementById('imagePreviews');
   if (product?.images?.length) {
     existingProductImages = [...product.images];
@@ -764,6 +810,10 @@ function closeProductModal() {
   document.getElementById('productModal').classList.remove('active');
   currentEditProduct = null;
   existingProductImages = [];
+  const hint = document.getElementById('productCopyHint');
+  const dupBtn = document.getElementById('duplicateProductFromModal');
+  if (hint) hint.hidden = true;
+  if (dupBtn) dupBtn.hidden = true;
 }
 
 function removeExistingImage(index) {
@@ -818,13 +868,24 @@ async function handleSaveProduct(e) {
       headers: { 'Authorization': `Bearer ${token}` },
       body: formData
     });
-    const data = await res.json();
+    let data = {};
+    try {
+      data = await res.json();
+    } catch {
+      data = { error: 'Invalid response from server' };
+    }
+    if (!res.ok) {
+      alert(data.error || `Could not save product (HTTP ${res.status})`);
+      return;
+    }
     if (data.message) {
       closeProductModal();
       loadProducts();
+    } else {
+      alert(data.error || 'Could not save product');
     }
   } catch (err) {
-    alert('Error saving product');
+    alert('Network error — could not save product');
   }
 }
 
@@ -832,6 +893,37 @@ async function editProduct(id) {
   const data = await apiCall('/products');
   const product = data?.products?.find(p => p.id === id);
   if (product) openProductModal(product);
+}
+
+/** One-click clone from the products table (same images via existing_images). */
+async function duplicateProduct(id) {
+  const data = await apiCall('/products');
+  const product = data?.products?.find(p => p.id === id);
+  if (product) openProductModal(product, { asCopy: true });
+}
+
+/** While editing, duplicate current form values (after your tweaks) as a new product draft. */
+function duplicateFromOpenEditor() {
+  const id = document.getElementById('productId')?.value;
+  if (!id) return;
+  const sizesStr = document.getElementById('prodSizes')?.value || '';
+  const colorsStr = document.getElementById('prodColors')?.value || '';
+  const p = {
+    name: nextCopyDisplayName(document.getElementById('prodName')?.value || ''),
+    description: document.getElementById('prodDesc')?.value || '',
+    price: document.getElementById('prodPrice')?.value || '',
+    sale_price: document.getElementById('prodSalePrice')?.value || '',
+    stock: document.getElementById('prodStock')?.value ?? 0,
+    sku: nextCopySku(document.getElementById('prodSku')?.value || ''),
+    featured: document.getElementById('prodFeatured')?.checked,
+    new_arrival: document.getElementById('prodNewArrival')?.checked,
+    best_seller: document.getElementById('prodBestSeller')?.checked,
+    sizes: sizesStr.split(',').map(s => s.trim()).filter(Boolean),
+    colors: colorsStr.split(',').map(c => c.trim()).filter(Boolean),
+    category_id: document.getElementById('prodCategory')?.value || null,
+    images: [...existingProductImages],
+  };
+  openProductModal(p, { asCopy: true });
 }
 
 async function deleteProduct(id) {

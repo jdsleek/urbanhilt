@@ -191,7 +191,20 @@ input, textarea, select, button { font-family: inherit; }
 .modal-header h3 { font-size: 1.1rem; }
 .modal-close { background: none; border: none; cursor: pointer; font-size: 1.1rem; color: var(--text-muted); padding: 4px; }
 .modal-body { padding: 24px; max-height: 65vh; overflow-y: auto; }
-.modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap; }
+.modal-footer-product .modal-footer-flex-spacer { flex: 1; min-width: 8px; }
+.btn-duplicate-from-modal { border-color: var(--accent); color: var(--accent-dark); }
+.btn-duplicate-from-modal:hover { background: rgba(201, 169, 110, 0.12); }
+
+.admin-copy-hint {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 12px 14px; margin-bottom: 16px;
+  background: linear-gradient(135deg, rgba(201, 169, 110, 0.12) 0%, rgba(59, 130, 246, 0.08) 100%);
+  border: 1px solid rgba(201, 169, 110, 0.35); border-radius: var(--radius);
+  font-size: 0.88rem; line-height: 1.45; color: var(--text);
+}
+.admin-copy-hint i { color: var(--accent-dark); margin-top: 2px; flex-shrink: 0; }
+.admin-copy-hint p { margin: 0; }
 
 /* Forms */
 .form-group { margin-bottom: 16px; }
