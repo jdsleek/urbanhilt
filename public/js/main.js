@@ -12,11 +12,48 @@ const UH = {
   },
 
   async api(endpoint, options = {}) {
-    const res = await fetch(this.API + endpoint, {
-      headers: { 'Content-Type': 'application/json', ...options.headers },
-      ...options
-    });
+    const { skipStaffAuth, ...fetchOpts } = options;
+    const headers = { 'Content-Type': 'application/json', ...fetchOpts.headers };
+    if (!skipStaffAuth) {
+      try {
+        const st = sessionStorage.getItem('uh_staff_token');
+        if (st) headers['Authorization'] = `Bearer ${st}`;
+      } catch (e) { /* sessionStorage blocked */ }
+    }
+    const res = await fetch(this.API + endpoint, { ...fetchOpts, headers });
     return res.json();
+  },
+
+  copyToClipboard(text) {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      this.showToast('Copied!', 'fa-copy');
+    }).catch(() => {
+      this.showToast('Could not copy', 'fa-exclamation-circle');
+    });
+  },
+
+  getStaffToken() {
+    try {
+      return sessionStorage.getItem('uh_staff_token');
+    } catch (e) {
+      return null;
+    }
+  },
+
+  setStaffToken(token) {
+    try {
+      if (token) sessionStorage.setItem('uh_staff_token', token);
+      else sessionStorage.removeItem('uh_staff_token');
+    } catch (e) { /* ignore */ }
+  },
+
+  staffLogout() {
+    this.setStaffToken(null);
+    try {
+      sessionStorage.removeItem('uh_staff_name');
+      sessionStorage.removeItem('uh_staff_profile');
+    } catch (e) { /* ignore */ }
   },
 
   getCart() {
@@ -188,9 +225,23 @@ const UH = {
   }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   UH.updateCartCount();
   UH.updateWishlistCount();
+
+  try {
+    const cfg = await UH.api('/store-config');
+    if (cfg.staffGateFullSite && !UH.getStaffToken()) {
+      const path = window.location.pathname;
+      if (!path.includes('staff-access') && !path.includes('/admin') && !path.includes('pos.html')) {
+        window.location.replace('/staff-access.html?return=' + encodeURIComponent(path + window.location.search));
+        return;
+      }
+    }
+    if (cfg.paystackPublicKey) {
+      window.PAYSTACK_PUBLIC_KEY = cfg.paystackPublicKey;
+    }
+  } catch (e) { /* offline */ }
 
   // Preloader
   const preloader = document.getElementById('preloader');

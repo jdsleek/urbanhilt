@@ -117,6 +117,10 @@ async function loadProduct(slug) {
       });
     }
 
+    document.getElementById('copyProductLink')?.addEventListener('click', () => {
+      UH.copyToClipboard(window.location.href);
+    });
+
     // Related products
     if (data.related?.length) {
       document.getElementById('relatedProducts').innerHTML = data.related.map(p => UH.productCardHTML(p)).join('');

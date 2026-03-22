@@ -2,12 +2,45 @@
    URBAN HILT — Checkout JavaScript
    ============================================ */
 
-document.addEventListener('DOMContentLoaded', () => {
+let appliedDiscount = { code: null, amount: 0 };
+let storeRequireStaff = false;
+let customerSubmitFlow = false;
+
+document.addEventListener('DOMContentLoaded', async () => {
   const cart = UH.getCart();
   if (!cart.length) {
     window.location.href = '/cart.html';
     return;
   }
+
+  try {
+    const cfg = await UH.api('/store-config');
+    storeRequireStaff = !!cfg.requireStaffCheckout;
+    customerSubmitFlow = !!cfg.customerSubmitStaffConfirms;
+    if (cfg.paystackPublicKey) window.PAYSTACK_PUBLIC_KEY = cfg.paystackPublicKey;
+    const tok = UH.getStaffToken();
+    if (customerSubmitFlow) {
+      document.getElementById('staffCheckoutAlert').style.display = 'flex';
+    } else if (tok) {
+      document.getElementById('staffSignedInBar').style.display = 'flex';
+      document.getElementById('staffSignedName').textContent =
+        sessionStorage.getItem('uh_staff_name') || 'Staff';
+    }
+  } catch (e) { /* ignore */ }
+
+  document.getElementById('staffSignOutCheckout')?.addEventListener('click', () => {
+    UH.staffLogout();
+    window.location.href = '/staff-access.html?return=/checkout.html';
+  });
+
+  const urlCode = new URLSearchParams(location.search).get('promo');
+  if (urlCode) document.getElementById('promoCode').value = urlCode;
+
+  document.getElementById('applyPromoBtn')?.addEventListener('click', applyPromoCode);
+  document.getElementById('copyOrderNumber')?.addEventListener('click', () => {
+    const el = document.getElementById('orderNumber');
+    if (el) UH.copyToClipboard(el.textContent.trim());
+  });
 
   renderCheckoutSidebar();
   initPaymentOptions();
@@ -38,12 +71,45 @@ function renderCheckoutSidebar() {
   updateCheckoutTotals();
 }
 
+async function applyPromoCode() {
+  const input = document.getElementById('promoCode');
+  const msg = document.getElementById('promoMessage');
+  const code = (input?.value || '').trim();
+  if (!code) {
+    msg.textContent = 'Enter a code';
+    return;
+  }
+  const subtotal = UH.getCartTotal();
+  const data = await UH.api(`/discounts/validate?code=${encodeURIComponent(code)}&subtotal=${subtotal}`);
+  if (data.valid) {
+    appliedDiscount = { code: data.code, amount: data.discount_amount };
+    msg.textContent = data.description || 'Applied';
+    msg.style.color = '#10b981';
+    updateCheckoutTotals();
+  } else {
+    appliedDiscount = { code: null, amount: 0 };
+    msg.textContent = data.error || 'Invalid code';
+    msg.style.color = '#ef4444';
+    updateCheckoutTotals();
+  }
+}
+
 function updateCheckoutTotals() {
   const subtotal = UH.getCartTotal();
-  const shipping = subtotal >= 50000 ? 0 : 3000;
-  const total = subtotal + shipping;
+  const disc = Math.min(appliedDiscount.amount || 0, subtotal);
+  const afterDisc = Math.max(0, subtotal - disc);
+  const shipping = afterDisc >= 50000 ? 0 : 3000;
+  const total = afterDisc + shipping;
 
   document.getElementById('checkoutSubtotal').textContent = UH.formatPrice(subtotal);
+  const dr = document.getElementById('discountRow');
+  if (disc > 0) {
+    dr.style.display = 'flex';
+    document.getElementById('checkoutDiscount').textContent =
+      '− ₦' + Number(disc).toLocaleString('en-NG');
+  } else {
+    dr.style.display = 'none';
+  }
   document.getElementById('checkoutShipping').textContent = shipping === 0 ? 'FREE' : UH.formatPrice(shipping);
   document.getElementById('checkoutTotal').textContent = UH.formatPrice(total);
 }
@@ -122,7 +188,10 @@ function showStep(step) {
 async function placeOrderWithMethod(paymentMethod, paystackRef) {
   const cart = UH.getCart();
   const subtotal = UH.getCartTotal();
-  const shipping = subtotal >= 50000 ? 0 : 3000;
+  const disc = Math.min(appliedDiscount.amount || 0, subtotal);
+  const afterDisc = Math.max(0, subtotal - disc);
+  const shipping = afterDisc >= 50000 ? 0 : 3000;
+  const total = afterDisc + shipping;
 
   const orderData = {
     customer_name: document.getElementById('customerName').value.trim(),
@@ -134,14 +203,14 @@ async function placeOrderWithMethod(paymentMethod, paystackRef) {
     items: cart,
     subtotal,
     shipping,
-    total: subtotal + shipping,
+    total,
     payment_method: paymentMethod,
-    notes: document.getElementById('orderNotes').value.trim()
+    notes: document.getElementById('orderNotes').value.trim(),
+    discount_code: appliedDiscount.code || undefined,
   };
 
   if (paystackRef) {
-    orderData.payment_reference = paystackRef;
-    orderData.payment_status = 'paid';
+    orderData.payment_ref = paystackRef;
   }
 
   try {
@@ -151,23 +220,42 @@ async function placeOrderWithMethod(paymentMethod, paystackRef) {
 
     const data = await UH.api('/orders', {
       method: 'POST',
-      body: JSON.stringify(orderData)
+      body: JSON.stringify(orderData),
+      skipStaffAuth: true,
     });
 
     if (data.order) {
       document.getElementById('orderNumber').textContent = data.order.order_number;
+      const awaiting = data.order.awaiting_staff_confirmation;
+      const titleEl = document.getElementById('orderSuccessTitle');
+      const subEl = document.getElementById('orderSuccessSubtitle');
+      const extraEl = document.getElementById('orderSuccessExtra');
+      if (titleEl) titleEl.textContent = awaiting ? 'Order submitted!' : 'Order placed successfully!';
+      if (subEl) {
+        subEl.style.display = 'block';
+        subEl.textContent = awaiting
+          ? 'We received your order. A staff member will confirm it and then we’ll process payment / delivery as chosen.'
+          : 'Thank you for shopping with Urban Hilt! We’ll process your order shortly.';
+      }
+      if (extraEl) {
+        extraEl.style.display = awaiting ? 'block' : 'none';
+        if (awaiting) {
+          extraEl.innerHTML =
+            '<p style="margin-top:12px;color:#666;font-size:0.95rem;">You can track status with your order number below. If you paid online, confirmation may take a short moment.</p>';
+        }
+      }
       localStorage.removeItem('uh_cart');
       UH.updateCartCount();
       showStep(3);
     } else {
       UH.showToast(data.error || 'Order failed. Please try again.', 'fa-exclamation-circle');
       btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-check"></i> Place Order';
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit order';
     }
   } catch (e) {
     UH.showToast('Something went wrong. Please try again.', 'fa-exclamation-circle');
     const btn = document.getElementById('placeOrder');
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Place Order'; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit order'; }
   }
 }
 
@@ -179,8 +267,10 @@ function initiatePaystackPayment() {
   }
 
   const subtotal = UH.getCartTotal();
-  const shipping = subtotal >= 50000 ? 0 : 3000;
-  const total = subtotal + shipping;
+  const disc = Math.min(appliedDiscount.amount || 0, subtotal);
+  const afterDisc = Math.max(0, subtotal - disc);
+  const shipping = afterDisc >= 50000 ? 0 : 3000;
+  const total = afterDisc + shipping;
 
   if (typeof PaystackPop === 'undefined') {
     UH.showToast('Payment system loading. Please try again.', 'fa-exclamation-circle');
@@ -193,7 +283,7 @@ function initiatePaystackPayment() {
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initiating payment...';
 
   const handler = PaystackPop.setup({
-    key: window.PAYSTACK_PUBLIC_KEY || 'pk_test_xxxx',
+    key: window.PAYSTACK_PUBLIC_KEY || '',
     email: email,
     amount: total * 100,
     currency: 'NGN',
@@ -208,7 +298,7 @@ function initiatePaystackPayment() {
     },
     onClose: function() {
       btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-check"></i> Place Order';
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit order';
       UH.showToast('Payment cancelled', 'fa-info-circle');
     }
   });

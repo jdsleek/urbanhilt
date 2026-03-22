@@ -68,6 +68,9 @@ node scripts/godaddy-dns.js set-www --target YOUR_RAILWAY_CNAME.up.railway.app
 
 - Set **`DATABASE_URL`** on the **same** Railway service that runs this app (ideally use a Postgres plugin in the **same project** so `postgres.railway.internal` works).
 - Optional: **`JWT_SECRET`**, **`NODE_ENV=production`**
+- **Checkout & staff:** set **`REQUIRE_STAFF_CHECKOUT=true`** so customers **submit** online; **sales staff** (PIN at `/staff-access.html`) verify payment with the customer, **mark payment verified** if needed (e.g. bank transfer), then **approve the sale** on **POS** or let **Admin** override. **Admin** is owner/manager (full access, can skip payment checks on approve); **staff profiles** (role, phone, staff code, etc.) are edited in **Admin → Sales staff**. Stock and promo use apply on approval.
+- **Paystack:** **`PAYSTACK_PUBLIC_KEY`** (and secret on server if you verify webhooks). Discount codes and **Staff access logs** are in **Admin** (`/admin/`).
+- Optional **`STAFF_GATE_FULL_SITE=true`** locks the whole storefront behind the PIN screen.
 - Health check: **`GET /api/health`** — should return `{"ok":true,"database":true}`
 
 ### “Server error” on admin login but the site loads

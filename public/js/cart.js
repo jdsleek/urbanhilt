@@ -2,7 +2,14 @@
    URBAN HILT — Cart Page JavaScript
    ============================================ */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const cfg = await UH.api('/store-config');
+    if (cfg.requireStaffCheckout) {
+      const n = document.getElementById('cartStaffNotice');
+      if (n) n.style.display = 'block';
+    }
+  } catch (e) { /* ignore */ }
   renderCart();
 });
 

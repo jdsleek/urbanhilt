@@ -28,6 +28,14 @@
 
   <section class="checkout-section">
     <div class="container">
+      <div id="staffCheckoutAlert" class="staff-checkout-alert" style="display:none;">
+        <i class="fas fa-info-circle"></i>
+        <span>You can <strong>submit your order</strong> here. A <strong>staff member must confirm</strong> it in the store or admin before stock is reserved and fulfillment begins.</span>
+      </div>
+      <div id="staffSignedInBar" class="staff-signed-bar" style="display:none;">
+        <i class="fas fa-check-circle"></i> Staff session active (<strong id="staffSignedName"></strong>) — not used for your personal checkout; orders you submit here still go for staff confirmation.
+        <button type="button" class="btn-text" id="staffSignOutCheckout">Clear staff session</button>
+      </div>
       <div class="checkout-layout">
         <div class="checkout-form-area">
           <!-- Step 1: Customer Information -->
@@ -108,6 +116,14 @@
                 </div>
               </div>
               <div class="form-group">
+                <label>Promo / discount code</label>
+                <div class="promo-row">
+                  <input type="text" id="promoCode" placeholder="Enter code" autocomplete="off">
+                  <button type="button" class="btn btn-outline" id="applyPromoBtn">Apply</button>
+                </div>
+                <p class="form-hint" id="promoMessage"></p>
+              </div>
+              <div class="form-group">
                 <label>Order Notes (optional)</label>
                 <textarea id="orderNotes" placeholder="Any special instructions..." rows="2"></textarea>
               </div>
@@ -122,7 +138,7 @@
             <div class="review-customer" id="reviewCustomer"></div>
             <div class="checkout-actions">
               <button class="btn btn-outline btn-lg" id="backToStep1"><i class="fas fa-arrow-left"></i> Back</button>
-              <button class="btn btn-primary btn-lg" id="placeOrder"><i class="fas fa-check"></i> Place Order</button>
+              <button class="btn btn-primary btn-lg" id="placeOrder"><i class="fas fa-paper-plane"></i> Submit order</button>
             </div>
           </div>
 
@@ -130,9 +146,12 @@
           <div class="checkout-step" id="step3" style="display:none;">
             <div class="order-success">
               <div class="success-icon"><i class="fas fa-check-circle"></i></div>
-              <h2>Order Placed Successfully!</h2>
-              <p class="order-number">Order Number: <strong id="orderNumber"></strong></p>
-              <p>Thank you for shopping with Urban Hilt! We'll process your order shortly.</p>
+              <h2 id="orderSuccessTitle">Order placed successfully!</h2>
+              <p id="orderSuccessSubtitle" class="order-success-sub">Thank you for shopping with Urban Hilt!</p>
+              <div id="orderSuccessExtra" style="display:none;"></div>
+              <p class="order-number">Order Number: <strong id="orderNumber"></strong>
+                <button type="button" class="btn-copy-inline" id="copyOrderNumber" title="Copy"><i class="fas fa-copy"></i> Copy</button>
+              </p>
               <p>For any questions, contact us on WhatsApp.</p>
               <div class="success-actions">
                 <a href="https://wa.me/2348146747883" class="btn btn-success btn-lg" target="_blank"><i class="fab fa-whatsapp"></i> Contact Us</a>
@@ -146,6 +165,7 @@
           <h3>Order Summary</h3>
           <div class="checkout-items" id="checkoutItems"></div>
           <div class="summary-row"><span>Subtotal</span><span id="checkoutSubtotal">₦0</span></div>
+          <div class="summary-row discount-row" id="discountRow" style="display:none;"><span>Discount</span><span id="checkoutDiscount">—</span></div>
           <div class="summary-row"><span>Shipping</span><span id="checkoutShipping">₦0</span></div>
           <div class="summary-row summary-total"><span>Total</span><span id="checkoutTotal">₦0</span></div>
         </div>
@@ -161,7 +181,6 @@
     </div>
   </footer>
 
-  <script src="https://js.paystack.co/v2/inline.js"></script>
   <script src="/js/main.js"></script>
   <script src="/js/checkout.js"></script>
 </body>

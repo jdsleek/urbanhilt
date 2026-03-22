@@ -206,7 +206,14 @@
   <script src="/js/main.js"></script>
   <script>
     const STATUSES = ['pending', 'processing', 'shipped', 'delivered'];
-    const STATUS_LABELS = { pending: 'Pending', processing: 'Processing', shipped: 'Shipped', delivered: 'Delivered', cancelled: 'Cancelled' };
+    const STATUS_LABELS = {
+      awaiting_staff: 'Awaiting store confirmation',
+      pending: 'Pending',
+      processing: 'Processing',
+      shipped: 'Shipped',
+      delivered: 'Delivered',
+      cancelled: 'Cancelled'
+    };
 
     function formatDate(dateStr) {
       if (!dateStr) return '';
@@ -225,10 +232,21 @@
     }
 
     function updateProgress(status) {
-      const idx = STATUSES.indexOf(status);
       const steps = document.querySelectorAll('.tracking-step');
       const fill = document.getElementById('progressFill');
+      const pendingLabel = document.querySelector('#stepPending .step-label');
 
+      if (status === 'awaiting_staff') {
+        steps.forEach(s => s.classList.remove('active', 'completed'));
+        const first = document.getElementById('stepPending');
+        if (first) first.classList.add('active');
+        if (pendingLabel) pendingLabel.textContent = 'Submitted';
+        fill.style.width = '6%';
+        return;
+      }
+
+      if (pendingLabel) pendingLabel.textContent = 'Pending';
+      const idx = STATUSES.indexOf(status);
       steps.forEach((step, i) => {
         step.classList.remove('active', 'completed');
         if (i < idx) step.classList.add('completed');
@@ -240,42 +258,49 @@
     }
 
     function renderOrder(order) {
-      document.getElementById('resultOrderNumber').textContent = order.orderNumber || '';
+      const num = order.order_number || order.orderNumber || '';
+      document.getElementById('resultOrderNumber').textContent = num;
       document.getElementById('resultStatus').textContent = STATUS_LABELS[order.status] || order.status;
 
       updateProgress(order.status);
 
-      if (order.createdAt) document.getElementById('datePending').textContent = formatDate(order.createdAt);
+      const created = order.created_at || order.createdAt;
+      if (created) document.getElementById('datePending').textContent = formatDate(created);
       if (order.processedAt) document.getElementById('dateProcessing').textContent = formatDate(order.processedAt);
       if (order.shippedAt) document.getElementById('dateShipped').textContent = formatDate(order.shippedAt);
       if (order.deliveredAt) document.getElementById('dateDelivered').textContent = formatDate(order.deliveredAt);
 
       const details = document.getElementById('orderDetailsContent');
+      const totalVal = order.total != null ? order.total : order.totalAmount;
       details.innerHTML = `
-        <div class="order-detail-row"><span class="label">Order Date</span><span class="value">${formatDate(order.createdAt)}</span></div>
+        ${order.status === 'awaiting_staff' ? '<p style="margin-bottom:12px;padding:12px;background:#fffbeb;border-radius:8px;border:1px solid #fde68a;color:#78350f;font-size:0.9rem;">Your order was received. The store team will <strong>confirm</strong> it shortly; tracking steps below will advance after confirmation.</p>' : ''}
+        <div class="order-detail-row"><span class="label">Order Date</span><span class="value">${formatDate(created)}</span></div>
         ${order.shippingAddress ? `<div class="order-detail-row"><span class="label">Delivery Address</span><span class="value">${order.shippingAddress.city || ''}, ${order.shippingAddress.state || ''}</span></div>` : ''}
-        ${order.totalAmount ? `<div class="order-detail-row"><span class="label">Total Amount</span><span class="value">${formatCurrency(order.totalAmount)}</span></div>` : ''}
-        ${order.paymentMethod ? `<div class="order-detail-row"><span class="label">Payment Method</span><span class="value">${order.paymentMethod}</span></div>` : ''}
+        ${totalVal != null ? `<div class="order-detail-row"><span class="label">Total Amount</span><span class="value">${formatCurrency(totalVal)}</span></div>` : ''}
+        ${order.payment_method || order.paymentMethod ? `<div class="order-detail-row"><span class="label">Payment Method</span><span class="value">${order.payment_method || order.paymentMethod}</span></div>` : ''}
       `;
 
       const itemsList = document.getElementById('orderItemsList');
       if (order.items && order.items.length) {
-        itemsList.innerHTML = order.items.map(item => `
+        document.getElementById('orderItems').style.display = 'block';
+        itemsList.innerHTML = order.items.map(item => {
+          const qty = item.qty != null ? item.qty : (item.quantity || 1);
+          return `
           <li>
             <div>
               <strong>${item.name || item.productName || 'Product'}</strong>
               ${item.size ? `<span style="color:var(--text-light); font-size:0.85rem;"> — Size: ${item.size}</span>` : ''}
-              ${item.quantity ? `<span style="color:var(--text-light); font-size:0.85rem;"> x${item.quantity}</span>` : ''}
+              <span style="color:var(--text-light); font-size:0.85rem;"> ×${qty}</span>
             </div>
-            <div style="font-weight:600;">${item.price ? formatCurrency(item.price * (item.quantity || 1)) : ''}</div>
-          </li>
-        `).join('');
+            <div style="font-weight:600;">${item.price != null ? formatCurrency(item.price * qty) : ''}</div>
+          </li>`;
+        }).join('');
       } else {
         document.getElementById('orderItems').style.display = 'none';
       }
 
       const whatsappLink = document.getElementById('whatsappOrderLink');
-      const msg = encodeURIComponent(`Hi Urban Hilt, I need help with my order ${order.orderNumber || ''}`);
+      const msg = encodeURIComponent(`Hi Urban Hilt, I need help with my order ${num}`);
       whatsappLink.href = `https://wa.me/2348146747883?text=${msg}`;
 
       showState('trackingResult');

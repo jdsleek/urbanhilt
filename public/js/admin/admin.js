@@ -3,7 +3,18 @@
    ============================================ */
 
 const API_BASE = '/api/admin';
+const PAGE_LABELS = {
+  dashboard: 'Dashboard',
+  products: 'Products',
+  categories: 'Categories',
+  orders: 'Orders',
+  subscribers: 'Subscribers',
+  'sales-staff': 'Sales staff',
+  'discount-codes': 'Discount codes',
+  'staff-logs': 'Staff access logs',
+};
 let token = localStorage.getItem('uh_admin_token');
+let orderFilterStatus = '';
 let currentEditProduct = null;
 let existingProductImages = [];
 
@@ -39,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
       link.classList.add('active');
       document.querySelectorAll('.admin-page').forEach(p => p.classList.remove('active'));
       document.getElementById(`page-${page}`).classList.add('active');
-      document.getElementById('pageTitle').textContent = page.charAt(0).toUpperCase() + page.slice(1);
+      document.getElementById('pageTitle').textContent = PAGE_LABELS[page] || (page.charAt(0).toUpperCase() + page.slice(1));
       closeSidebar();
       loadPageData(page);
     });
@@ -81,9 +92,20 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.order-filters .btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      loadOrders(btn.dataset.status);
+      orderFilterStatus = btn.dataset.status || '';
+      loadOrders(orderFilterStatus);
     });
   });
+
+  // Sales staff & discounts
+  document.getElementById('addStaffBtn')?.addEventListener('click', () => openStaffModal(null));
+  document.getElementById('closeStaffModal')?.addEventListener('click', closeStaffModal);
+  document.getElementById('cancelStaff')?.addEventListener('click', closeStaffModal);
+  document.getElementById('staffForm')?.addEventListener('submit', handleSaveStaff);
+  document.getElementById('addDiscountBtn')?.addEventListener('click', () => openDiscountModal(null));
+  document.getElementById('closeDiscountModal')?.addEventListener('click', closeDiscountModal);
+  document.getElementById('cancelDiscount')?.addEventListener('click', closeDiscountModal);
+  document.getElementById('discountForm')?.addEventListener('submit', handleSaveDiscount);
 });
 
 async function handleLogin(e) {
@@ -152,6 +174,9 @@ async function loadPageData(page) {
     case 'products': await loadProducts(); break;
     case 'categories': await loadCategories(); break;
     case 'orders': await loadOrders(); break;
+    case 'sales-staff': await loadSalesStaff(); break;
+    case 'discount-codes': await loadDiscountCodes(); break;
+    case 'staff-logs': await loadStaffLogs(); break;
     case 'subscribers': await loadSubscribers(); break;
   }
 }
@@ -164,6 +189,8 @@ async function loadDashboard() {
   document.getElementById('statOrders').textContent = data.totalOrders;
   document.getElementById('statRevenue').textContent = '₦' + Number(data.totalRevenue).toLocaleString();
   document.getElementById('statPending').textContent = data.pendingOrders;
+  const awaitEl = document.getElementById('statAwaitingStaff');
+  if (awaitEl) awaitEl.textContent = data.awaitingStaffOrders ?? 0;
   const subEl = document.getElementById('statSubscribers');
   if (subEl) subEl.textContent = data.totalSubscribers || 0;
 
@@ -260,36 +287,81 @@ async function loadCategories() {
 }
 
 async function loadOrders(status = '') {
-  const endpoint = status ? `/orders?status=${status}` : '/orders';
+  const endpoint = status ? `/orders?status=${encodeURIComponent(status)}` : '/orders';
   const data = await apiCall(endpoint);
   if (!data) return;
 
   const table = document.getElementById('ordersTable');
-  table.innerHTML = data.orders?.map(o => `
+  table.innerHTML = data.orders?.map(o => {
+    const awaiting = o.status === 'awaiting_staff';
+    const payOk = !!(o.payment_verified_at || (o.payment_ref && o.payment_method === 'paystack') ||
+      o.payment_method === 'pay_on_delivery' || o.payment_method === 'whatsapp');
+    const payTag = awaiting
+      ? (payOk
+        ? '<div style="font-size:0.7rem;color:#059669;margin-top:4px;">Payment OK to approve</div>'
+        : '<div style="font-size:0.7rem;color:#b45309;margin-top:4px;">Verify payment first</div>')
+      : '';
+    const statusCell = awaiting
+      ? `<span class="status-badge status-awaiting_staff">Awaiting staff</span>${payTag}`
+      : `<select class="status-select" onchange="updateOrderStatus(${o.id}, this.value)" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:0.8rem;">
+          <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>Pending</option>
+          <option value="processing" ${o.status === 'processing' ? 'selected' : ''}>Processing</option>
+          <option value="shipped" ${o.status === 'shipped' ? 'selected' : ''}>Shipped</option>
+          <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+          <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+        </select>`;
+    const verifyBtn = awaiting
+      ? `<button type="button" class="action-btn" style="background:#f59e0b;color:#fff;" onclick="verifyOrderPaymentAdmin(${o.id})" title="Mark payment verified"><i class="fas fa-money-check"></i></button>`
+      : '';
+    const confirmBtn = awaiting
+      ? `<button type="button" class="action-btn" style="background:#10b981;color:#fff;" onclick="confirmAwaitingOrder(${o.id})" title="Approve sale (admin — skips payment check)"><i class="fas fa-check"></i></button>`
+      : '';
+    return `
     <tr>
       <td><strong>${o.order_number}</strong></td>
       <td>${o.customer_name}</td>
       <td><a href="tel:${o.customer_phone}">${o.customer_phone}</a></td>
       <td>${o.items?.length || 0} item(s)</td>
       <td>₦${Number(o.total).toLocaleString()}</td>
-      <td>
-        <select class="status-select" onchange="updateOrderStatus(${o.id}, this.value)" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:0.8rem;">
-          <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>Pending</option>
-          <option value="processing" ${o.status === 'processing' ? 'selected' : ''}>Processing</option>
-          <option value="shipped" ${o.status === 'shipped' ? 'selected' : ''}>Shipped</option>
-          <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>Delivered</option>
-          <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
-        </select>
-      </td>
+      <td>${statusCell}</td>
       <td>${new Date(o.created_at).toLocaleDateString()}</td>
       <td>
         <div class="action-btns">
+          ${verifyBtn}
+          ${confirmBtn}
           <button class="action-btn" onclick='viewOrder(${JSON.stringify(o).replace(/'/g, "&#39;")})' title="View"><i class="fas fa-eye"></i></button>
           <button class="action-btn delete" onclick="deleteOrder(${o.id})" title="Delete"><i class="fas fa-trash"></i></button>
         </div>
       </td>
-    </tr>
-  `).join('') || '<tr><td colspan="8" style="text-align:center;color:#999;">No orders found</td></tr>';
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" style="text-align:center;color:#999;">No orders found</td></tr>';
+}
+
+async function verifyOrderPaymentAdmin(id) {
+  const res = await fetch(API_BASE + '/orders/' + id + '/verify-payment', {
+    method: 'POST',
+    headers: authHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    alert(data.error || 'Could not mark payment verified');
+    return;
+  }
+  loadOrders(orderFilterStatus);
+}
+
+async function confirmAwaitingOrder(id) {
+  if (!confirm('Approve this sale as admin? Stock will be deducted. (Payment rules are skipped — you are the override.)')) return;
+  const res = await fetch(API_BASE + '/orders/' + id + '/confirm', {
+    method: 'POST',
+    headers: authHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    alert(data.error || 'Could not confirm order');
+    return;
+  }
+  loadOrders(orderFilterStatus);
 }
 
 async function loadSubscribers() {
@@ -303,6 +375,254 @@ async function loadSubscribers() {
       <td>${new Date(s.subscribed_at).toLocaleDateString()}</td>
     </tr>
   `).join('') || '<tr><td colspan="2" style="text-align:center;color:#999;">No subscribers yet</td></tr>';
+}
+
+function toDatetimeLocal(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+async function loadSalesStaff() {
+  const data = await apiCall('/sales-staff');
+  if (!data) return;
+  const table = document.getElementById('salesStaffTable');
+  table.innerHTML = data.staff?.map(s => `
+    <tr>
+      <td><code style="font-size:0.75rem;">${escapeHtml(s.staff_code || '—')}</code></td>
+      <td><strong>${escapeHtml(s.name)}</strong></td>
+      <td>${escapeHtml(s.job_title || '—')}</td>
+      <td>${s.phone ? `<a href="tel:${escapeHtml(s.phone)}">${escapeHtml(s.phone)}</a>` : '—'}</td>
+      <td>${s.email ? escapeHtml(s.email) : '—'}</td>
+      <td>${s.active ? '<span class="status-badge status-delivered">Yes</span>' : '<span class="status-badge status-cancelled">No</span>'}</td>
+      <td>${new Date(s.created_at).toLocaleDateString()}</td>
+      <td>
+        <div class="action-btns">
+          <button type="button" class="action-btn" onclick="editSalesStaff(${s.id})" title="Edit"><i class="fas fa-edit"></i></button>
+          <button type="button" class="action-btn delete" onclick="deactivateSalesStaff(${s.id})" title="Deactivate"><i class="fas fa-user-slash"></i></button>
+        </div>
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="8" style="text-align:center;color:#999;">No staff yet</td></tr>';
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+}
+
+async function editSalesStaff(id) {
+  const data = await apiCall('/sales-staff');
+  const s = data?.staff?.find(x => x.id === id);
+  if (s) openStaffModal(s);
+}
+
+function openStaffModal(staff) {
+  const modal = document.getElementById('staffModal');
+  document.getElementById('staffModalTitle').textContent = staff ? 'Edit sales staff profile' : 'Add sales staff';
+  document.getElementById('staffId').value = staff?.id || '';
+  document.getElementById('staffName').value = staff?.name || '';
+  document.getElementById('staffCode').value = staff?.staff_code || '';
+  document.getElementById('staffJobTitle').value = staff?.job_title || '';
+  document.getElementById('staffPhone').value = staff?.phone || '';
+  document.getElementById('staffEmail').value = staff?.email || '';
+  document.getElementById('staffPhotoUrl').value = staff?.photo_url || '';
+  document.getElementById('staffPin').value = '';
+  document.getElementById('staffPin').required = !staff;
+  document.getElementById('staffPinLabel').textContent = staff ? 'New PIN (optional)' : 'PIN (min 4 digits) *';
+  document.getElementById('staffPinHint').style.display = staff ? 'block' : 'none';
+  document.getElementById('staffActiveWrap').style.display = staff ? 'block' : 'none';
+  document.getElementById('staffActive').checked = staff ? !!staff.active : true;
+  modal.classList.add('active');
+}
+
+function closeStaffModal() {
+  document.getElementById('staffModal')?.classList.remove('active');
+}
+
+async function handleSaveStaff(e) {
+  e.preventDefault();
+  const id = document.getElementById('staffId').value;
+  const name = document.getElementById('staffName').value.trim();
+  const pin = document.getElementById('staffPin').value.trim();
+  const active = document.getElementById('staffActive').checked;
+  const profile = {
+    job_title: document.getElementById('staffJobTitle').value.trim(),
+    phone: document.getElementById('staffPhone').value.trim(),
+    email: document.getElementById('staffEmail').value.trim(),
+    photo_url: document.getElementById('staffPhotoUrl').value.trim(),
+    staff_code: document.getElementById('staffCode').value.trim(),
+  };
+
+  if (!id && (!pin || pin.length < 4)) {
+    alert('PIN must be at least 4 characters.');
+    return;
+  }
+
+  if (!id) {
+    const res = await fetch(API_BASE + '/sales-staff', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ name, pin, ...profile }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Failed to add staff');
+      return;
+    }
+  } else {
+    const body = { name, active, ...profile };
+    if (pin.length >= 4) body.pin = pin;
+    const res = await fetch(API_BASE + '/sales-staff/' + id, {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Failed to update');
+      return;
+    }
+  }
+  closeStaffModal();
+  loadSalesStaff();
+}
+
+async function deactivateSalesStaff(id) {
+  if (!confirm('Deactivate this staff member? They will no longer be able to sign in.')) return;
+  await apiCall('/sales-staff/' + id, { method: 'DELETE' });
+  loadSalesStaff();
+}
+
+async function loadDiscountCodes() {
+  const data = await apiCall('/discount-codes');
+  if (!data) return;
+  const table = document.getElementById('discountCodesTable');
+  table.innerHTML = data.discounts?.map(d => {
+    const val = d.discount_type === 'fixed'
+      ? `₦${Number(d.value).toLocaleString()}`
+      : `${d.value}%`;
+    const uses = d.max_uses != null ? `${d.uses_count || 0} / ${d.max_uses}` : `${d.uses_count || 0}`;
+    return `
+    <tr>
+      <td><strong>${escapeHtml(d.code)}</strong></td>
+      <td>${d.discount_type}</td>
+      <td>${val}</td>
+      <td>₦${Number(d.min_subtotal || 0).toLocaleString()}</td>
+      <td>${uses}</td>
+      <td>${d.active ? 'Yes' : 'No'}</td>
+      <td>
+        <div class="action-btns">
+          <button type="button" class="action-btn" onclick="editDiscountCode(${d.id})" title="Edit"><i class="fas fa-edit"></i></button>
+          <button type="button" class="action-btn delete" onclick="deleteDiscountCode(${d.id})" title="Delete"><i class="fas fa-trash"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;">No discount codes</td></tr>';
+}
+
+async function editDiscountCode(id) {
+  const data = await apiCall('/discount-codes');
+  const d = data?.discounts?.find(x => x.id === id);
+  if (d) openDiscountModal(d);
+}
+
+function openDiscountModal(d) {
+  const modal = document.getElementById('discountModal');
+  document.getElementById('discountModalTitle').textContent = d ? 'Edit discount code' : 'Add discount code';
+  document.getElementById('discountId').value = d?.id || '';
+  const codeInput = document.getElementById('discCode');
+  codeInput.value = d?.code || '';
+  codeInput.readOnly = !!d;
+  document.getElementById('discDesc').value = d?.description || '';
+  document.getElementById('discType').value = d?.discount_type === 'fixed' ? 'fixed' : 'percent';
+  document.getElementById('discValue').value = d?.value ?? '';
+  document.getElementById('discMin').value = d?.min_subtotal ?? 0;
+  document.getElementById('discMaxUses').value = d?.max_uses ?? '';
+  document.getElementById('discValidFrom').value = toDatetimeLocal(d?.valid_from);
+  document.getElementById('discValidUntil').value = toDatetimeLocal(d?.valid_until);
+  document.getElementById('discActive').checked = d ? !!d.active : true;
+  modal.classList.add('active');
+}
+
+function closeDiscountModal() {
+  document.getElementById('discountModal')?.classList.remove('active');
+}
+
+function discPayloadFromForm() {
+  const vf = document.getElementById('discValidFrom').value;
+  const vu = document.getElementById('discValidUntil').value;
+  const maxUses = document.getElementById('discMaxUses').value;
+  return {
+    code: document.getElementById('discCode').value.trim().toUpperCase(),
+    description: document.getElementById('discDesc').value.trim(),
+    discount_type: document.getElementById('discType').value,
+    value: parseFloat(document.getElementById('discValue').value),
+    min_subtotal: parseFloat(document.getElementById('discMin').value) || 0,
+    max_uses: maxUses === '' ? null : parseInt(maxUses, 10),
+    valid_from: vf ? new Date(vf).toISOString() : null,
+    valid_until: vu ? new Date(vu).toISOString() : null,
+    active: document.getElementById('discActive').checked,
+  };
+}
+
+async function handleSaveDiscount(e) {
+  e.preventDefault();
+  const id = document.getElementById('discountId').value;
+  const payload = discPayloadFromForm();
+  if (!payload.code || payload.value == null || Number.isNaN(payload.value)) {
+    alert('Code and value are required.');
+    return;
+  }
+  if (!id) {
+    const res = await fetch(API_BASE + '/discount-codes', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Failed to create');
+      return;
+    }
+  } else {
+    const { code, ...rest } = payload;
+    const res = await fetch(API_BASE + '/discount-codes/' + id, {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify(rest),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Failed to update');
+      return;
+    }
+  }
+  closeDiscountModal();
+  loadDiscountCodes();
+}
+
+async function deleteDiscountCode(id) {
+  if (!confirm('Delete this discount code?')) return;
+  await apiCall('/discount-codes/' + id, { method: 'DELETE' });
+  loadDiscountCodes();
+}
+
+async function loadStaffLogs() {
+  const data = await apiCall('/staff-logs?limit=200');
+  if (!data) return;
+  const table = document.getElementById('staffLogsTable');
+  table.innerHTML = data.logs?.map(l => `
+    <tr>
+      <td style="white-space:nowrap;font-size:0.8rem;">${new Date(l.created_at).toLocaleString()}</td>
+      <td><code style="font-size:0.75rem;">${escapeHtml(l.event_type)}</code></td>
+      <td>${escapeHtml(l.staff_name || '—')}</td>
+      <td style="max-width:220px;word-break:break-word;font-size:0.85rem;">${escapeHtml(l.detail || '')}</td>
+      <td style="font-size:0.75rem;color:#888;">${escapeHtml(l.ip || '')}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="5" style="text-align:center;color:#999;">No log entries yet</td></tr>';
 }
 
 // Product CRUD
@@ -470,12 +790,39 @@ async function deleteCategory(id) {
 // Orders
 async function updateOrderStatus(id, status) {
   await apiCall(`/orders/${id}`, { method: 'PUT', body: JSON.stringify({ status }) });
+  loadOrders(orderFilterStatus);
 }
 
 function viewOrder(order) {
   const modal = document.getElementById('orderModal');
+  let items = order.items;
+  if (typeof items === 'string') {
+    try { items = JSON.parse(items); } catch { items = []; }
+  }
+  if (!Array.isArray(items)) items = [];
+  const discLine = order.discount_code
+    ? `<p><strong>Discount:</strong> ${escapeHtml(order.discount_code)} (−₦${Number(order.discount_amount || 0).toLocaleString()})</p>`
+    : '';
+  const staffLine = order.staff_id
+    ? `<p><strong>Staff checkout:</strong> staff ID ${order.staff_id}</p>`
+    : '';
+  const payRef = order.payment_ref || order.payment_reference;
+  const payRefLine = payRef ? `<p><strong>Payment ref:</strong> <code>${escapeHtml(String(payRef))}</code></p>` : '';
+  let payVerifiedLine = '';
+  if (order.payment_verified_at) {
+    const src = order.payment_verified_by_staff_id ? `Staff #${order.payment_verified_by_staff_id}` : 'Admin';
+    payVerifiedLine = `<p><strong>Payment verified:</strong> Yes (${src}) — ${new Date(order.payment_verified_at).toLocaleString()}</p>`;
+  } else if (order.status === 'awaiting_staff') {
+    payVerifiedLine = `<p><strong>Payment verified:</strong> <span style="color:#b45309;">Not marked yet</span> (staff should confirm with customer, or use Paystack ref / pay on delivery)</p>`;
+  }
+
   document.getElementById('orderModalTitle').textContent = `Order ${order.order_number}`;
+  const stLabel =
+    order.status === 'awaiting_staff'
+      ? 'Awaiting staff confirmation'
+      : (order.status || '').replace(/_/g, ' ');
   document.getElementById('orderDetailContent').innerHTML = `
+    <p style="margin-bottom:16px;"><strong>Status:</strong> <span class="status-badge status-${order.status}">${stLabel}</span></p>
     <div style="margin-bottom:20px;">
       <h4 style="margin-bottom:8px;">Customer Information</h4>
       <p><strong>Name:</strong> ${order.customer_name}</p>
@@ -483,11 +830,15 @@ function viewOrder(order) {
       <p><strong>Email:</strong> ${order.customer_email || 'N/A'}</p>
       <p><strong>Address:</strong> ${order.address}, ${order.city}, ${order.state}</p>
       <p><strong>Payment:</strong> ${order.payment_method}</p>
+      ${payRefLine}
+      ${payVerifiedLine}
+      ${discLine}
+      ${staffLine}
       ${order.notes ? `<p><strong>Notes:</strong> ${order.notes}</p>` : ''}
     </div>
     <div style="margin-bottom:20px;">
       <h4 style="margin-bottom:8px;">Items</h4>
-      ${order.items?.map(item => `
+      ${items.map(item => `
         <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;">
           <span>${item.name} ${item.size ? `(${item.size})` : ''} × ${item.qty}</span>
           <strong>₦${Number(item.price * item.qty).toLocaleString()}</strong>
@@ -496,13 +847,18 @@ function viewOrder(order) {
     </div>
     <div>
       <div style="display:flex;justify-content:space-between;padding:8px 0;"><span>Subtotal</span><span>₦${Number(order.subtotal).toLocaleString()}</span></div>
+      ${order.discount_amount > 0 ? `<div style="display:flex;justify-content:space-between;padding:8px 0;color:#1a7f37;"><span>Discount</span><span>−₦${Number(order.discount_amount).toLocaleString()}</span></div>` : ''}
       <div style="display:flex;justify-content:space-between;padding:8px 0;"><span>Shipping</span><span>₦${Number(order.shipping).toLocaleString()}</span></div>
       <div style="display:flex;justify-content:space-between;padding:12px 0;border-top:2px solid #333;font-weight:700;font-size:1.1rem;"><span>Total</span><span>₦${Number(order.total).toLocaleString()}</span></div>
     </div>
-    <div style="margin-top:16px;">
+    <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
       <a href="https://wa.me/${order.customer_phone?.replace(/[^0-9]/g,'')}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#25d366;color:#fff;border-radius:6px;font-size:0.85rem;">
         <i class="fab fa-whatsapp"></i> Message Customer on WhatsApp
       </a>
+      ${order.status === 'awaiting_staff' && order.id ? `
+        <button type="button" class="btn btn-outline" onclick="verifyOrderPaymentAdmin(${order.id}); document.getElementById('orderModal').classList.remove('active');">Mark payment verified</button>
+        <button type="button" class="btn btn-primary" onclick="confirmAwaitingOrder(${order.id}); document.getElementById('orderModal').classList.remove('active');">Approve sale (admin)</button>
+      ` : ''}
     </div>
   `;
   modal.classList.add('active');
@@ -511,5 +867,5 @@ function viewOrder(order) {
 async function deleteOrder(id) {
   if (!confirm('Are you sure you want to delete this order?')) return;
   await apiCall(`/orders/${id}`, { method: 'DELETE' });
-  loadOrders();
+  loadOrders(orderFilterStatus);
 }

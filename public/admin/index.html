@@ -47,6 +47,9 @@
         <a href="#" class="sidebar-link" data-page="products"><i class="fas fa-box"></i> Products</a>
         <a href="#" class="sidebar-link" data-page="categories"><i class="fas fa-tags"></i> Categories</a>
         <a href="#" class="sidebar-link" data-page="orders"><i class="fas fa-shopping-cart"></i> Orders</a>
+        <a href="#" class="sidebar-link" data-page="sales-staff"><i class="fas fa-user-lock"></i> Sales staff</a>
+        <a href="#" class="sidebar-link" data-page="discount-codes"><i class="fas fa-percent"></i> Discount codes</a>
+        <a href="#" class="sidebar-link" data-page="staff-logs"><i class="fas fa-clipboard-list"></i> Staff access logs</a>
         <a href="#" class="sidebar-link" data-page="subscribers"><i class="fas fa-envelope"></i> Subscribers</a>
       </nav>
       <div class="sidebar-footer">
@@ -84,6 +87,10 @@
             <div class="stat-card">
               <div class="stat-icon" style="background:#f59e0b22;color:#f59e0b"><i class="fas fa-clock"></i></div>
               <div class="stat-info"><h3 id="statPending">0</h3><p>Pending Orders</p></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#fcd34d22;color:#b45309"><i class="fas fa-hourglass-half"></i></div>
+              <div class="stat-info"><h3 id="statAwaitingStaff">0</h3><p>Awaiting staff confirm</p></div>
             </div>
           </div>
           <div class="dashboard-grid">
@@ -130,6 +137,7 @@
           <div class="page-actions">
             <div class="order-filters">
               <button class="btn btn-sm active" data-status="">All</button>
+              <button class="btn btn-sm" data-status="awaiting_staff">Awaiting staff</button>
               <button class="btn btn-sm" data-status="pending">Pending</button>
               <button class="btn btn-sm" data-status="processing">Processing</button>
               <button class="btn btn-sm" data-status="shipped">Shipped</button>
@@ -141,6 +149,47 @@
             <table class="admin-table">
               <thead><tr><th>Order #</th><th>Customer</th><th>Phone</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
               <tbody id="ordersTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Sales staff -->
+        <div class="admin-page" id="page-sales-staff">
+          <div class="page-actions">
+            <button class="btn btn-primary" id="addStaffBtn"><i class="fas fa-plus"></i> Add sales staff</button>
+          </div>
+          <p style="color:#666;font-size:0.9rem;margin-bottom:16px;">
+            <strong>Store team</strong> — profiles for sales reps who talk to customers, verify payments, and approve orders on POS.
+            <strong>Admin</strong> is the owner/manager: full access here, can override anything, but day‑to‑day selling is staff.
+          </p>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Code</th><th>Name</th><th>Role</th><th>Phone</th><th>Email</th><th>Active</th><th>Created</th><th>Actions</th></tr></thead>
+              <tbody id="salesStaffTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Discount codes -->
+        <div class="admin-page" id="page-discount-codes">
+          <div class="page-actions">
+            <button class="btn btn-primary" id="addDiscountBtn"><i class="fas fa-plus"></i> Add discount code</button>
+          </div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Min ₦</th><th>Uses</th><th>Active</th><th>Actions</th></tr></thead>
+              <tbody id="discountCodesTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Staff access logs -->
+        <div class="admin-page" id="page-staff-logs">
+          <p style="color:#666;font-size:0.9rem;margin-bottom:16px;">PIN attempts, sign-ins, and staff-placed orders (latest 200).</p>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Time</th><th>Event</th><th>Staff</th><th>Detail</th><th>IP</th></tr></thead>
+              <tbody id="staffLogsTable"></tbody>
             </table>
           </div>
         </div>
@@ -231,6 +280,79 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" id="cancelCategory">Cancel</button>
           <button type="submit" class="btn btn-primary">Save Category</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Sales staff modal -->
+  <div class="modal-overlay" id="staffModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="staffModalTitle">Add sales staff</h3>
+        <button type="button" class="modal-close" id="closeStaffModal"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="staffForm">
+        <input type="hidden" id="staffId">
+        <div class="modal-body">
+          <div class="form-row form-row-2">
+            <div class="form-group"><label>Display name *</label><input type="text" id="staffName" required autocomplete="off" placeholder="e.g. Ada O."></div>
+            <div class="form-group"><label>Staff code</label><input type="text" id="staffCode" autocomplete="off" placeholder="e.g. UH-S02"></div>
+          </div>
+          <div class="form-group"><label>Job title / role</label><input type="text" id="staffJobTitle" autocomplete="off" placeholder="Sales associate, Floor lead…"></div>
+          <div class="form-row form-row-2">
+            <div class="form-group"><label>Phone (customer-facing)</label><input type="tel" id="staffPhone" autocomplete="off" placeholder="+234…"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="staffEmail" autocomplete="off"></div>
+          </div>
+          <div class="form-group"><label>Photo URL</label><input type="url" id="staffPhotoUrl" autocomplete="off" placeholder="https://… (optional)"></div>
+          <div class="form-group" id="staffPinWrap">
+            <label id="staffPinLabel">PIN (min 4 digits) *</label>
+            <input type="password" id="staffPin" inputmode="numeric" pattern="[0-9]{4,12}" autocomplete="new-password" placeholder="e.g. 8888">
+          </div>
+          <div class="form-group" id="staffActiveWrap" style="display:none;">
+            <label><input type="checkbox" id="staffActive" checked> Active (can sign in)</label>
+          </div>
+          <p id="staffPinHint" style="display:none;font-size:0.8rem;color:#666;">Leave PIN blank to keep the current PIN.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="cancelStaff">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Discount code modal -->
+  <div class="modal-overlay" id="discountModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="discountModalTitle">Add discount code</h3>
+        <button type="button" class="modal-close" id="closeDiscountModal"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="discountForm">
+        <input type="hidden" id="discountId">
+        <div class="modal-body">
+          <div class="form-row form-row-2">
+            <div class="form-group"><label>Code *</label><input type="text" id="discCode" required placeholder="URBANHILT10"></div>
+            <div class="form-group"><label>Type *</label>
+              <select id="discType"><option value="percent">Percent off</option><option value="fixed">Fixed amount (₦)</option></select>
+            </div>
+          </div>
+          <div class="form-group"><label>Description</label><input type="text" id="discDesc" placeholder="First order promo"></div>
+          <div class="form-row form-row-3">
+            <div class="form-group"><label>Value *</label><input type="number" id="discValue" required step="0.01" placeholder="10"></div>
+            <div class="form-group"><label>Min cart subtotal (₦)</label><input type="number" id="discMin" step="0.01" value="0"></div>
+            <div class="form-group"><label>Max uses (empty = unlimited)</label><input type="number" id="discMaxUses" min="1" placeholder="∞"></div>
+          </div>
+          <div class="form-row form-row-2">
+            <div class="form-group"><label>Valid from</label><input type="datetime-local" id="discValidFrom"></div>
+            <div class="form-group"><label>Valid until</label><input type="datetime-local" id="discValidUntil"></div>
+          </div>
+          <div class="form-group"><label><input type="checkbox" id="discActive" checked> Active</label></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="cancelDiscount">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
         </div>
       </form>
     </div>

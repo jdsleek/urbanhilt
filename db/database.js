@@ -122,7 +122,56 @@ async function initDatabase() {
       email TEXT UNIQUE NOT NULL,
       subscribed_at TIMESTAMP DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS sales_staff (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      pin_hash TEXT NOT NULL,
+      active INTEGER DEFAULT 1,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS staff_access_logs (
+      id SERIAL PRIMARY KEY,
+      staff_id INTEGER REFERENCES sales_staff(id) ON DELETE SET NULL,
+      event_type TEXT NOT NULL,
+      detail TEXT,
+      ip TEXT,
+      user_agent TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS discount_codes (
+      id SERIAL PRIMARY KEY,
+      code TEXT UNIQUE NOT NULL,
+      description TEXT,
+      discount_type TEXT NOT NULL DEFAULT 'percent',
+      value NUMERIC NOT NULL,
+      min_subtotal NUMERIC DEFAULT 0,
+      max_uses INTEGER,
+      uses_count INTEGER DEFAULT 0,
+      valid_from TIMESTAMP,
+      valid_until TIMESTAMP,
+      active INTEGER DEFAULT 1,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
   `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS staff_id INTEGER REFERENCES sales_staff(id) ON DELETE SET NULL;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_code TEXT;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount NUMERIC DEFAULT 0;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_verified_at TIMESTAMP;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_verified_by_staff_id INTEGER REFERENCES sales_staff(id) ON DELETE SET NULL;
+  `).catch(() => {});
+
+  await pool.query(`
+    ALTER TABLE sales_staff ADD COLUMN IF NOT EXISTS job_title TEXT;
+    ALTER TABLE sales_staff ADD COLUMN IF NOT EXISTS phone TEXT;
+    ALTER TABLE sales_staff ADD COLUMN IF NOT EXISTS email TEXT;
+    ALTER TABLE sales_staff ADD COLUMN IF NOT EXISTS photo_url TEXT;
+    ALTER TABLE sales_staff ADD COLUMN IF NOT EXISTS staff_code TEXT;
+  `).catch(() => {});
 
   console.log('  ✓ Database initialized successfully');
 }
