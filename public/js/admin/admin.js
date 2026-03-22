@@ -137,7 +137,7 @@ async function handleLogin(e) {
     try {
       data = text ? JSON.parse(text) : {};
     } catch {
-      errEl.textContent = 'Server returned an invalid response. Check deployment & database.';
+      errEl.textContent = 'Server returned an invalid response. Try again later.';
       return;
     }
 
@@ -173,9 +173,34 @@ function logout() {
   document.getElementById('loginScreen').style.display = 'flex';
 }
 
+/** Public endpoint — sets View Store link + sidebar label to PUBLIC_SITE_URL or current origin. */
+async function syncLiveStoreUi() {
+  const viewLink = document.getElementById('viewStoreLink');
+  const domainEl = document.getElementById('adminStoreDomain');
+  let base = window.location.origin;
+  try {
+    const res = await fetch('/api/store-config');
+    const cfg = await res.json();
+    if (cfg && cfg.siteUrl && String(cfg.siteUrl).trim()) {
+      base = String(cfg.siteUrl).replace(/\/$/, '');
+    }
+  } catch (_) {
+    /* keep origin */
+  }
+  if (viewLink) {
+    viewLink.href = base + '/';
+  }
+  if (domainEl) {
+    domainEl.textContent = 'Live store: ' + base.replace(/^https?:\/\//, '');
+    domainEl.removeAttribute('hidden');
+    domainEl.title = base;
+  }
+}
+
 function showDashboard() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('adminLayout').style.display = 'flex';
+  syncLiveStoreUi();
   loadPageData('dashboard');
 }
 
@@ -328,7 +353,7 @@ async function loadOrders(status = '') {
   const table = document.getElementById('ordersTable');
   if (data.apiError) {
     table.innerHTML =
-      `<tr><td colspan="8" style="text-align:center;color:#c00;padding:24px;">Could not load orders: ${escapeHtml(data.error || 'Error')} (HTTP ${data.httpStatus || '?'}). Check Railway logs and DATABASE_URL.</td></tr>`;
+      `<tr><td colspan="8" style="text-align:center;color:#c00;padding:24px;">Could not load orders: ${escapeHtml(data.error || 'Error')} (HTTP ${data.httpStatus || '?'}). If this persists, confirm the database is reachable.</td></tr>`;
     return;
   }
 
