@@ -155,23 +155,27 @@ async function initDatabase() {
       active INTEGER DEFAULT 1,
       created_at TIMESTAMP DEFAULT NOW()
     );
-  `);
+  `).catch((e) => console.error('  ✗ DB init (core tables):', e.message || e));
 
-  await pool.query(`
+  await pool
+    .query(`
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS staff_id INTEGER REFERENCES sales_staff(id) ON DELETE SET NULL;
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_code TEXT;
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount NUMERIC DEFAULT 0;
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_verified_at TIMESTAMP;
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_verified_by_staff_id INTEGER REFERENCES sales_staff(id) ON DELETE SET NULL;
-  `).catch(() => {});
+  `)
+    .catch((e) => console.error('  ✗ Orders column migration:', e.message || e));
 
-  await pool.query(`
+  await pool
+    .query(`
     ALTER TABLE sales_staff ADD COLUMN IF NOT EXISTS job_title TEXT;
     ALTER TABLE sales_staff ADD COLUMN IF NOT EXISTS phone TEXT;
     ALTER TABLE sales_staff ADD COLUMN IF NOT EXISTS email TEXT;
     ALTER TABLE sales_staff ADD COLUMN IF NOT EXISTS photo_url TEXT;
     ALTER TABLE sales_staff ADD COLUMN IF NOT EXISTS staff_code TEXT;
-  `).catch(() => {});
+  `)
+    .catch((e) => console.error('  ✗ sales_staff column migration:', e.message || e));
 
   console.log('  ✓ Database initialized successfully');
 }

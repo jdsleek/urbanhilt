@@ -28,7 +28,18 @@ async function apiCall(endpoint, options = {}) {
     ...options
   });
   if (res.status === 401) { logout(); return null; }
-  return res.json();
+  let data = {};
+  try {
+    data = await res.json();
+  } catch {
+    data = { error: 'Invalid JSON from server' };
+  }
+  if (!res.ok) {
+    data.apiError = true;
+    data.httpStatus = res.status;
+    console.warn('Admin API', endpoint, res.status, data);
+  }
+  return data;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -185,6 +196,18 @@ async function loadDashboard() {
   const data = await apiCall('/dashboard');
   if (!data) return;
 
+  if (data.apiError) {
+    document.getElementById('statProducts').textContent = '—';
+    document.getElementById('statOrders').textContent = '—';
+    document.getElementById('statRevenue').textContent = '—';
+    document.getElementById('statPending').textContent = '—';
+    const awaitEl = document.getElementById('statAwaitingStaff');
+    if (awaitEl) awaitEl.textContent = '—';
+    document.getElementById('recentOrdersTable').innerHTML =
+      `<tr><td colspan="5" style="text-align:center;color:#c00;">Dashboard failed: ${escapeHtml(data.error || 'Error')} (HTTP ${data.httpStatus || '?'})</td></tr>`;
+    return;
+  }
+
   document.getElementById('statProducts').textContent = data.totalProducts;
   document.getElementById('statOrders').textContent = data.totalOrders;
   document.getElementById('statRevenue').textContent = '₦' + Number(data.totalRevenue).toLocaleString();
@@ -229,7 +252,8 @@ async function loadDashboard() {
   }
 
   const table = document.getElementById('recentOrdersTable');
-  table.innerHTML = data.recentOrders?.map(o => `
+  const recent = Array.isArray(data.recentOrders) ? data.recentOrders : [];
+  table.innerHTML = recent.map(o => `
     <tr>
       <td><strong>${o.order_number}</strong></td>
       <td>${o.customer_name}</td>
@@ -243,9 +267,14 @@ async function loadDashboard() {
 async function loadProducts() {
   const data = await apiCall('/products');
   if (!data) return;
+  if (data.apiError) {
+    document.getElementById('productsTable').innerHTML =
+      `<tr><td colspan="7" style="text-align:center;color:#c00;">${escapeHtml(data.error || 'Error')}</td></tr>`;
+    return;
+  }
 
   const table = document.getElementById('productsTable');
-  table.innerHTML = data.products?.map(p => {
+  table.innerHTML = (data.products || []).map(p => {
     const img = p.images?.[0];
     return `
       <tr>
@@ -269,9 +298,14 @@ async function loadProducts() {
 async function loadCategories() {
   const data = await apiCall('/categories');
   if (!data) return;
+  if (data.apiError) {
+    document.getElementById('categoriesTable').innerHTML =
+      `<tr><td colspan="4" style="text-align:center;color:#c00;">${escapeHtml(data.error || 'Error')}</td></tr>`;
+    return;
+  }
 
   const table = document.getElementById('categoriesTable');
-  table.innerHTML = data.categories?.map(c => `
+  table.innerHTML = (data.categories || []).map(c => `
     <tr>
       <td><strong>${c.name}</strong></td>
       <td>${c.slug}</td>
@@ -292,7 +326,14 @@ async function loadOrders(status = '') {
   if (!data) return;
 
   const table = document.getElementById('ordersTable');
-  table.innerHTML = data.orders?.map(o => {
+  if (data.apiError) {
+    table.innerHTML =
+      `<tr><td colspan="8" style="text-align:center;color:#c00;padding:24px;">Could not load orders: ${escapeHtml(data.error || 'Error')} (HTTP ${data.httpStatus || '?'}). Check Railway logs and DATABASE_URL.</td></tr>`;
+    return;
+  }
+
+  const orderRows = Array.isArray(data.orders) ? data.orders : [];
+  table.innerHTML = orderRows.map(o => {
     const awaiting = o.status === 'awaiting_staff';
     const payOk = !!(o.payment_verified_at || (o.payment_ref && o.payment_method === 'paystack') ||
       o.payment_method === 'pay_on_delivery' || o.payment_method === 'whatsapp');
@@ -334,7 +375,8 @@ async function loadOrders(status = '') {
         </div>
       </td>
     </tr>`;
-  }).join('') || '<tr><td colspan="8" style="text-align:center;color:#999;">No orders found</td></tr>';
+  }).join('') ||
+    '<tr><td colspan="8" style="text-align:center;color:#999;">No orders in this view. Use filter <strong>All</strong> — paid-on-delivery orders are usually <strong>Pending</strong>, not "Awaiting staff".</td></tr>';
 }
 
 async function verifyOrderPaymentAdmin(id) {

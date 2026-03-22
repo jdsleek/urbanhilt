@@ -8,6 +8,7 @@ const { v4: uuidv4 } = require('uuid');
 const { query } = require('../db/database');
 const { authenticateAdmin, JWT_SECRET } = require('../middleware/auth');
 const { finalizeAwaitingOrder } = require('../lib/orderFinalize');
+const { parseJsonSafe } = require('../lib/parseJsonSafe');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'uploads')),
@@ -92,12 +93,14 @@ router.get('/dashboard', authenticateAdmin, async (req, res) => {
 
     const { rows: recentOrderRows } = await query('SELECT * FROM orders ORDER BY created_at DESC LIMIT 10');
     const recentOrders = recentOrderRows.map(o => ({
-      ...o, items: JSON.parse(o.items || '[]')
+      ...o,
+      items: parseJsonSafe(o.items, []),
     }));
 
     const { rows: topProductRows } = await query('SELECT * FROM products ORDER BY best_seller DESC, created_at DESC LIMIT 5');
     const topProducts = topProductRows.map(p => ({
-      ...p, images: JSON.parse(p.images || '[]')
+      ...p,
+      images: parseJsonSafe(p.images, []),
     }));
 
     const subscribers = (await query('SELECT COUNT(*) as count FROM newsletter_subscribers')).rows[0].count;
@@ -135,10 +138,10 @@ router.get('/products', authenticateAdmin, async (req, res) => {
     res.json({
       products: products.map(p => ({
         ...p,
-        images: JSON.parse(p.images || '[]'),
-        sizes: JSON.parse(p.sizes || '[]'),
-        colors: JSON.parse(p.colors || '[]')
-      }))
+        images: parseJsonSafe(p.images, []),
+        sizes: parseJsonSafe(p.sizes, []),
+        colors: parseJsonSafe(p.colors, []),
+      })),
     });
   } catch (e) {
     console.error(e);
@@ -299,8 +302,11 @@ router.get('/orders', authenticateAdmin, async (req, res) => {
     const total = (await query('SELECT COUNT(*) as count FROM orders')).rows[0].count;
 
     res.json({
-      orders: orders.map(o => ({ ...o, items: JSON.parse(o.items || '[]') })),
-      total
+      orders: orders.map(o => ({
+        ...o,
+        items: parseJsonSafe(o.items, []),
+      })),
+      total,
     });
   } catch (e) {
     console.error(e);

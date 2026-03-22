@@ -218,13 +218,19 @@ async function placeOrderWithMethod(paymentMethod, paystackRef) {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
-    const data = await UH.api('/orders', {
+    const res = await fetch('/api/orders', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(orderData),
-      skipStaffAuth: true,
     });
+    let data = {};
+    try {
+      data = await res.json();
+    } catch {
+      data = { error: 'Invalid response from server' };
+    }
 
-    if (data.order) {
+    if (res.ok && data.order) {
       document.getElementById('orderNumber').textContent = data.order.order_number;
       const awaiting = data.order.awaiting_staff_confirmation;
       const titleEl = document.getElementById('orderSuccessTitle');
@@ -248,7 +254,10 @@ async function placeOrderWithMethod(paymentMethod, paystackRef) {
       UH.updateCartCount();
       showStep(3);
     } else {
-      UH.showToast(data.error || 'Order failed. Please try again.', 'fa-exclamation-circle');
+      const msg =
+        data.error ||
+        (!res.ok ? `Order failed (HTTP ${res.status}). Check you’re on the live store and try again.` : 'Order failed. Please try again.');
+      UH.showToast(msg, 'fa-exclamation-circle');
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit order';
     }

@@ -86,11 +86,11 @@
             </div>
             <div class="stat-card">
               <div class="stat-icon" style="background:#f59e0b22;color:#f59e0b"><i class="fas fa-clock"></i></div>
-              <div class="stat-info"><h3 id="statPending">0</h3><p>Pending Orders</p></div>
+              <div class="stat-info"><h3 id="statPending">0</h3><p>Pending <span style="font-weight:400;font-size:0.75rem;color:#888;">(approved)</span></p></div>
             </div>
             <div class="stat-card">
               <div class="stat-icon" style="background:#fcd34d22;color:#b45309"><i class="fas fa-hourglass-half"></i></div>
-              <div class="stat-info"><h3 id="statAwaitingStaff">0</h3><p>Awaiting staff confirm</p></div>
+              <div class="stat-info"><h3 id="statAwaitingStaff">0</h3><p>Awaiting staff <span style="font-weight:400;font-size:0.75rem;color:#888;">(submitted online)</span></p></div>
             </div>
           </div>
           <div class="dashboard-grid">
@@ -134,6 +134,9 @@
 
         <!-- Orders Page -->
         <div class="admin-page" id="page-orders">
+          <p style="color:#666;font-size:0.88rem;margin-bottom:12px;max-width:720px;">
+            <strong>Tip:</strong> If <code>REQUIRE_STAFF_CHECKOUT</code> is off, new orders are <strong>Pending</strong> immediately (not “Awaiting staff”). Use the <strong>All</strong> or <strong>Pending</strong> filter. Apex vs <code>www</code> must hit the same Railway app + Postgres.
+          </p>
           <div class="page-actions">
             <div class="order-filters">
               <button class="btn btn-sm active" data-status="">All</button>

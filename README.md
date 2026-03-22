@@ -73,6 +73,15 @@ node scripts/godaddy-dns.js set-www --target YOUR_RAILWAY_CNAME.up.railway.app
 - Optional **`STAFF_GATE_FULL_SITE=true`** locks the whole storefront behind the PIN screen.
 - Health check: **`GET /api/health`** — should return `{"ok":true,"database":true}`
 
+### Orders show on checkout but not in Admin / “0 awaiting staff”
+
+1. **Filters:** If **`REQUIRE_STAFF_CHECKOUT`** is **not** `true`, new orders are **`pending`**, not `awaiting_staff`. Open **Admin → Orders** and choose **All** or **Pending**, not only “Awaiting staff”.
+2. **Same database & app:** `www` and apex must point at the **one** Railway service that has your **`DATABASE_URL`**. If the storefront and admin use different deployments or DBs, orders disappear from Admin.
+3. **Logs:** After deploy, Railway logs should show `[order] created UH-…` for each successful checkout.
+4. **DB check (optional):** from a machine with DB access, run  
+   `DATABASE_URL=… node scripts/verify-order-flow.js`  
+   to print order counts and the latest rows.
+
 ### “Server error” on admin login but the site loads
 
 If you have **more than one** `*.up.railway.app` domain, they may point to **different deployments** (different IPs). Open **`/api/health`** on the URL you use for the store: if it returns `503`, that deployment has no working database. In Railway → **Networking**, attach your preferred public URL to the service that already has Postgres + `DATABASE_URL` configured (or add Postgres and `DATABASE_URL` to the failing service).

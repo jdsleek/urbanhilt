@@ -3,21 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { query } = require('../db/database');
-
-/** Avoid 500s when DB returns non-string JSON fields or malformed JSON */
-function parseJsonSafe(raw, fallback = []) {
-  if (raw == null || raw === '') return fallback;
-  if (typeof raw !== 'string') {
-    if (Array.isArray(raw)) return raw;
-    if (typeof raw === 'object') return raw;
-    return fallback;
-  }
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return fallback;
-  }
-}
+const { parseJsonSafe } = require('../lib/parseJsonSafe');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'urbanhilt-luxury-2024-secret-key';
 const CUSTOMER_SECRET = process.env.CUSTOMER_SECRET || 'uh-customer-secret-2024';
@@ -434,6 +420,10 @@ router.post('/orders', optionalStaffAuth, async (req, res) => {
         );
       }
     }
+
+    console.log(
+      `[order] created ${orderNumber} status=${orderStatus} total=${total} awaitingStaff=${awaitingStaff}`
+    );
 
     res.status(201).json({
       message: awaitingStaff
