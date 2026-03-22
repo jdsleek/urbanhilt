@@ -67,6 +67,8 @@ node scripts/godaddy-dns.js set-www --target YOUR_RAILWAY_CNAME.up.railway.app
 ## Railway / production
 
 - Set **`DATABASE_URL`** on the **same** Railway service that runs this app (ideally use a Postgres plugin in the **same project** so `postgres.railway.internal` works).
+- Bulk-set vars from a local file (API token required): `npm run railway:set-env -- --env-file .env.railway` — see **`docs/RAILWAY-GITHUB-CLIENT.md`**, **`docs/CLIENT-RAILWAY.md`**, and **`scripts/railway-set-env.js`**.
+- On the deployment that serves **www.urbanhilt.com**, set **`PUBLIC_SITE_URL=https://www.urbanhilt.com`** (optional but recommended; exposed in `/api/store-config` as `siteUrl`).
 - Optional: **`JWT_SECRET`**, **`NODE_ENV=production`**
 - **Checkout & staff:** set **`REQUIRE_STAFF_CHECKOUT=true`** so customers **submit** online; **sales staff** (PIN at `/staff-access.html`) verify payment with the customer, **mark payment verified** if needed (e.g. bank transfer), then **approve the sale** on **POS** or let **Admin** override. **Admin** is owner/manager (full access, can skip payment checks on approve); **staff profiles** (role, phone, staff code, etc.) are edited in **Admin → Sales staff**. Stock and promo use apply on approval.
 - **Paystack:** **`PAYSTACK_PUBLIC_KEY`** (and secret on server if you verify webhooks). Discount codes and **Staff access logs** are in **Admin** (`/admin/`).

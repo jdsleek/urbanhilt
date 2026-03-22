@@ -175,6 +175,7 @@ router.post('/products/:slug/reviews', async (req, res) => {
 // ==================== STORE CONFIG (staff gate / checkout rules) ====================
 router.get('/store-config', async (req, res) => {
   try {
+    const siteUrl = (process.env.PUBLIC_SITE_URL || '').replace(/\/$/, '');
     res.json({
       requireStaffCheckout: process.env.REQUIRE_STAFF_CHECKOUT === 'true',
       /** When true, customers submit orders as "awaiting staff"; only staff/admin can confirm (deduct stock). */
@@ -182,6 +183,8 @@ router.get('/store-config', async (req, res) => {
       staffGateFullSite: process.env.STAFF_GATE_FULL_SITE === 'true',
       paystackConfigured: !!(process.env.PAYSTACK_PUBLIC_KEY && String(process.env.PAYSTACK_PUBLIC_KEY).startsWith('pk_')),
       paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY || '',
+      /** Production canonical URL e.g. https://www.urbanhilt.com — set on the Railway service that has the custom domain */
+      siteUrl: siteUrl || null,
     });
   } catch (e) {
     res.status(500).json({ error: 'Server error' });

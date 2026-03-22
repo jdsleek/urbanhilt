@@ -3,6 +3,8 @@
 Public repo: **https://github.com/jdsleek/urbanhilt**  
 Branch: **`main`**
 
+**Two Railway targets?** If you deploy the same repo to **your** Railway and the **client’s** Railway, put the custom domain **`www.urbanhilt.com`** and production secrets only on the **client** project. See **`docs/CLIENT-RAILWAY.md`**.
+
 ## 1. Link GitHub in Railway (one-time)
 
 1. Client logs in at **https://railway.app**
@@ -49,5 +51,24 @@ A **Railway token does not fix DNS.**
 
 ## 6. API token (optional, for CLI / automation)
 
-- **Railway → Account → Tokens** → create a token.
-- **Do not** paste tokens in chat or commit them. Use locally: `export RAILWAY_TOKEN=...` or CI secrets.
+- **Railway → Account → Tokens** → create a token (account / workspace), **or** **Project → Settings → Tokens** for a **project token** (uses `Project-Access-Token` header).
+- **Do not** paste tokens in chat or commit them. Use locally: `export RAILWAY_TOKEN=...` or `export RAILWAY_PROJECT_TOKEN=...`, or CI secrets.
+
+### Push variables from a local file (script)
+
+1. Copy `.env.example` to **`.env.railway`** (local only), fill secrets and `DATABASE_URL`.
+2. In **`.env`**: `RAILWAY_TOKEN` + `RAILWAY_PROJECT_ID` (Cmd/Ctrl+K → copy project ID). Environment and Node service are **auto-detected**; use `--service-name` only if needed.
+3. Run:
+
+```bash
+npm run railway:set-env -- --env-file .env.railway
+```
+
+**Project token** (no project id in `.env`):
+
+```bash
+export RAILWAY_PROJECT_TOKEN="..."
+npm run railway:set-env -- --env-file .env.railway
+```
+
+- `--dry-run`, `--list-project`, `--service-name`, `--skip-deploys` — see `scripts/railway-set-env.js`.
