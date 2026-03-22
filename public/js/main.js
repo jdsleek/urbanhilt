@@ -348,13 +348,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadNavCategories() {
+  const navCats = document.getElementById('navCategories');
+  if (!navCats) return;
   try {
     const data = await UH.api('/categories');
-    const navCats = document.getElementById('navCategories');
-    if (navCats && data.categories?.length) {
-      navCats.innerHTML = data.categories.map(c =>
-        `<a href="/shop.html?category=${c.slug}">${c.name}</a>`
-      ).join('') + '<a href="/shop.html">View All</a>';
-    }
-  } catch (e) {}
+    const list = data.categories || [];
+    const links =
+      list.map((c) => `<a href="/shop.html?category=${encodeURIComponent(c.slug)}">${c.name}</a>`).join('') +
+      '<a href="/shop.html">View All</a>';
+    navCats.innerHTML = links;
+  } catch (e) {
+    navCats.innerHTML = '<a href="/shop.html">Shop</a>';
+  }
 }

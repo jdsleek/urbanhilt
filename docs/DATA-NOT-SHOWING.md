@@ -2,6 +2,13 @@
 
 Use this when **someone sees products/orders in Admin but customers see less**, or **images are broken**, or **only part of the old site’s data appeared**.
 
+## Categories missing on the homepage or nav
+
+- **Empty table:** If `GET /api/catalog-counts` shows **`categories: 0`**, add categories in **Admin → Categories** (or run **`npm run seed`** on that database once).
+- **API error:** Open the browser **Network** tab and check **`/api/categories`** — should be **200** and a JSON array. **500** → check Railway logs (DB connection).
+- **Same DB as admin:** Compare **`curl …/api/catalog-counts`** on **www** vs the URL where you use Admin (see §1).
+- **Optional photos:** Set **Image URL** on each category in Admin so homepage cards use that image instead of the default icon.
+
 ## 1. Two different databases (most common)
 
 Admin and the shop use the **same** `DATABASE_URL` **on the deployment you opened**. If the owner uses **Admin on one URL** (e.g. Railway’s `*.up.railway.app`) but customers use **`www`**, those can be **two apps** or **two Postgres** instances.

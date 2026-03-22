@@ -820,6 +820,7 @@ function openCategoryModal(category = null) {
   document.getElementById('categoryId').value = category?.id || '';
   document.getElementById('catName').value = category?.name || '';
   document.getElementById('catDesc').value = category?.description || '';
+  document.getElementById('catImage').value = category?.image || '';
   document.getElementById('catOrder').value = category?.display_order || 0;
   document.getElementById('categoryModal').classList.add('active');
 }
@@ -834,6 +835,7 @@ async function handleSaveCategory(e) {
   const body = {
     name: document.getElementById('catName').value,
     description: document.getElementById('catDesc').value,
+    image: document.getElementById('catImage').value.trim(),
     display_order: parseInt(document.getElementById('catOrder').value) || 0
   };
 

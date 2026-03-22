@@ -2,6 +2,13 @@
    URBAN HILT — Homepage JavaScript
    ============================================ */
 
+function escAttr(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;');
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await Promise.all([
     loadCategories(),
@@ -13,25 +20,47 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadCategories() {
+  const grid = document.getElementById('categoriesGrid');
+  if (!grid) return;
+
   try {
     const data = await UH.api('/categories');
-    const grid = document.getElementById('categoriesGrid');
-    if (!grid || !data.categories?.length) return;
+    if (data.error) {
+      grid.innerHTML =
+        '<p class="categories-empty-msg">Categories could not be loaded. Please refresh or try again later.</p>';
+      return;
+    }
+    const list = data.categories || [];
+    if (!list.length) {
+      grid.innerHTML =
+        '<p class="categories-empty-msg">No categories yet. Add them in <strong>Admin → Categories</strong>, then refresh.</p>';
+      return;
+    }
 
     const icons = ['fa-tshirt', 'fa-shoe-prints', 'fa-vest', 'fa-hat-cowboy', 'fa-bag-shopping', 'fa-glasses'];
-    grid.innerHTML = data.categories.map((cat, i) => `
-      <a href="/shop.html?category=${cat.slug}" class="category-card reveal">
-        <div class="category-card-bg"><i class="fas ${icons[i % icons.length]}"></i></div>
+    grid.innerHTML = list.map((cat, i) => {
+      const name = escAttr(cat.name);
+      const img = cat.image && String(cat.image).trim();
+      const bgInner = img
+        ? `<img class="category-card-img" src="${escAttr(img)}" alt="" loading="lazy" width="600" height="400">`
+        : `<i class="fas ${icons[i % icons.length]}"></i>`;
+      const count = Number(cat.product_count) || 0;
+      const q = encodeURIComponent(cat.slug || '');
+      return `
+      <a href="/shop.html?category=${q}" class="category-card reveal">
+        <div class="category-card-bg">${bgInner}</div>
         <div class="category-card-overlay"></div>
         <div class="category-card-content">
-          <h3>${cat.name}</h3>
-          <p>${cat.product_count || 0} Products</p>
+          <h3>${name}</h3>
+          <p>${count} Product${count !== 1 ? 's' : ''}</p>
         </div>
         <div class="category-card-arrow"><i class="fas fa-arrow-right"></i></div>
-      </a>
-    `).join('');
+      </a>`;
+    }).join('');
   } catch (e) {
     console.error('Error loading categories:', e);
+    grid.innerHTML =
+      '<p class="categories-empty-msg">Categories could not be loaded. Check your connection and try again.</p>';
   }
 }
 

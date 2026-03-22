@@ -290,12 +290,16 @@ router.get('/discounts/validate', async (req, res) => {
 // ==================== CATEGORIES ====================
 router.get('/categories', async (req, res) => {
   try {
+    // Scalar subquery avoids GROUP BY + c.* edge cases; counts are integers
     const { rows: categories } = await query(`
-      SELECT c.*, COUNT(p.id) as product_count FROM categories c
-      LEFT JOIN products p ON c.id = p.category_id GROUP BY c.id ORDER BY c.display_order ASC
+      SELECT c.*,
+        (SELECT COUNT(*)::int FROM products p WHERE p.category_id = c.id) AS product_count
+      FROM categories c
+      ORDER BY c.display_order ASC, c.name ASC
     `);
     res.json({ categories });
   } catch (e) {
+    console.error('GET /categories failed:', e.message || e);
     res.status(500).json({ error: 'Server error' });
   }
 });
