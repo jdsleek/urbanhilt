@@ -104,8 +104,16 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.order-filters .btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       orderFilterStatus = btn.dataset.status || '';
-      loadOrders(orderFilterStatus);
+      loadOrders();
     });
+  });
+
+  document.getElementById('orderSearchBtn')?.addEventListener('click', () => loadOrders());
+  document.getElementById('orderSearchInput')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      loadOrders();
+    }
   });
 
   // Sales staff & discounts
@@ -209,7 +217,10 @@ async function loadPageData(page) {
     case 'dashboard': await loadDashboard(); break;
     case 'products': await loadProducts(); break;
     case 'categories': await loadCategories(); break;
-    case 'orders': await loadOrders(); break;
+    case 'orders':
+      resetOrdersPageFilters();
+      await loadOrders();
+      break;
     case 'sales-staff': await loadSalesStaff(); break;
     case 'discount-codes': await loadDiscountCodes(); break;
     case 'staff-logs': await loadStaffLogs(); break;
@@ -345,8 +356,23 @@ async function loadCategories() {
   `).join('') || '<tr><td colspan="4" style="text-align:center;color:#999;">No categories yet</td></tr>';
 }
 
-async function loadOrders(status = '') {
-  const endpoint = status ? `/orders?status=${encodeURIComponent(status)}` : '/orders';
+/** Opening Orders resets to “All” so staff-checkout orders (awaiting_staff) aren’t hidden by a stale Pending filter. */
+function resetOrdersPageFilters() {
+  orderFilterStatus = '';
+  document.querySelectorAll('.order-filters .btn').forEach((b) => {
+    b.classList.toggle('active', (b.dataset.status || '') === '');
+  });
+  const inp = document.getElementById('orderSearchInput');
+  if (inp) inp.value = '';
+}
+
+async function loadOrders() {
+  const params = new URLSearchParams();
+  if (orderFilterStatus) params.set('status', orderFilterStatus);
+  const q = document.getElementById('orderSearchInput')?.value?.trim() || '';
+  if (q) params.set('search', q);
+  const qs = params.toString();
+  const endpoint = qs ? `/orders?${qs}` : '/orders';
   const data = await apiCall(endpoint);
   if (!data) return;
 
@@ -401,7 +427,7 @@ async function loadOrders(status = '') {
       </td>
     </tr>`;
   }).join('') ||
-    '<tr><td colspan="8" style="text-align:center;color:#999;">No orders in this view. Use filter <strong>All</strong> — paid-on-delivery orders are usually <strong>Pending</strong>, not "Awaiting staff".</td></tr>';
+    '<tr><td colspan="8" style="text-align:center;color:#999;">No orders match. With staff checkout on, new web orders are <strong>Awaiting staff</strong> — choose <strong>All</strong> or <strong>Awaiting staff</strong>, or use <strong>Find order #</strong> above.</td></tr>';
 }
 
 async function verifyOrderPaymentAdmin(id) {
@@ -414,7 +440,7 @@ async function verifyOrderPaymentAdmin(id) {
     alert(data.error || 'Could not mark payment verified');
     return;
   }
-  loadOrders(orderFilterStatus);
+  loadOrders();
 }
 
 async function confirmAwaitingOrder(id) {
@@ -428,7 +454,7 @@ async function confirmAwaitingOrder(id) {
     alert(data.error || 'Could not confirm order');
     return;
   }
-  loadOrders(orderFilterStatus);
+  loadOrders();
 }
 
 async function loadSubscribers() {
@@ -859,7 +885,7 @@ async function deleteCategory(id) {
 // Orders
 async function updateOrderStatus(id, status) {
   await apiCall(`/orders/${id}`, { method: 'PUT', body: JSON.stringify({ status }) });
-  loadOrders(orderFilterStatus);
+  loadOrders();
 }
 
 function viewOrder(order) {
@@ -936,5 +962,5 @@ function viewOrder(order) {
 async function deleteOrder(id) {
   if (!confirm('Are you sure you want to delete this order?')) return;
   await apiCall(`/orders/${id}`, { method: 'DELETE' });
-  loadOrders(orderFilterStatus);
+  loadOrders();
 }

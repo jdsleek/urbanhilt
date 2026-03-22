@@ -288,12 +288,22 @@ router.delete('/categories/:id', authenticateAdmin, async (req, res) => {
 
 router.get('/orders', authenticateAdmin, async (req, res) => {
   try {
-    const { status, limit, offset } = req.query;
+    const { status, limit, offset, search } = req.query;
     let q = 'SELECT * FROM orders';
     const params = [];
     let paramIdx = 1;
+    const conditions = [];
 
-    if (status) { q += ` WHERE status = $${paramIdx++}`; params.push(status); }
+    if (status) {
+      conditions.push(`status = $${paramIdx++}`);
+      params.push(status);
+    }
+    const rawSearch = typeof search === 'string' ? search.trim().slice(0, 80) : '';
+    if (rawSearch) {
+      conditions.push(`order_number ILIKE $${paramIdx++}`);
+      params.push(`%${rawSearch}%`);
+    }
+    if (conditions.length) q += ` WHERE ${conditions.join(' AND ')}`;
     q += ' ORDER BY created_at DESC';
     if (limit) { q += ` LIMIT $${paramIdx++}`; params.push(parseInt(limit)); }
     if (offset) { q += ` OFFSET $${paramIdx++}`; params.push(parseInt(offset)); }

@@ -182,6 +182,10 @@ function showStep(step) {
     s.classList.toggle('active', sNum === step);
     s.classList.toggle('completed', sNum < step);
   });
+  const layout = document.querySelector('.checkout-layout');
+  const sidebar = document.getElementById('checkoutSidebar');
+  if (layout) layout.classList.toggle('checkout-layout--success', step === 3);
+  if (sidebar) sidebar.style.display = step === 3 ? 'none' : '';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

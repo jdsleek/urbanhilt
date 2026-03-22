@@ -136,8 +136,15 @@
         <!-- Orders Page -->
         <div class="admin-page" id="page-orders">
           <p style="color:#666;font-size:0.88rem;margin-bottom:12px;max-width:720px;">
-            <strong>Tip:</strong> If <code>REQUIRE_STAFF_CHECKOUT</code> is off, new orders are <strong>Pending</strong> immediately (not “Awaiting staff”). Use the <strong>All</strong> or <strong>Pending</strong> filter. Customers and this admin should use the <strong>same</strong> live store URL (see sidebar) so orders show up here.
+            <strong>Tip:</strong> With <code>REQUIRE_STAFF_CHECKOUT=true</code>, website orders start as <strong>Awaiting staff</strong> (not Pending). Use <strong>All</strong> or <strong>Awaiting staff</strong>. This page resets to <strong>All</strong> each time you open Orders. If checkout works but nothing appears here, the store and admin are likely on different databases — same site URL in the sidebar for both.
           </p>
+          <div class="page-actions" style="flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:12px;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;color:#555;">
+              <span>Find order #</span>
+              <input type="text" id="orderSearchInput" placeholder="e.g. UH-MN2B71G0-TEUA" autocomplete="off" style="padding:8px 12px;border:1px solid #ddd;border-radius:6px;min-width:220px;">
+              <button type="button" class="btn btn-sm btn-primary" id="orderSearchBtn">Search</button>
+            </label>
+          </div>
           <div class="page-actions">
             <div class="order-filters">
               <button class="btn btn-sm active" data-status="">All</button>

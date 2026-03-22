@@ -748,6 +748,12 @@ input, textarea, select, button { font-family: inherit; font-size: inherit; }
 
 .checkout-section { padding: 120px 0 80px; }
 .checkout-layout { display: grid; grid-template-columns: 1fr 380px; gap: 60px; }
+/* Step 3: sidebar hidden via JS — full width so success + Continue Shopping stay in view */
+.checkout-layout.checkout-layout--success {
+  grid-template-columns: 1fr;
+  max-width: 640px;
+  margin: 0 auto;
+}
 .checkout-step-title { font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 30px; }
 
 .form-group { margin-bottom: 20px; }
@@ -805,7 +811,15 @@ input, textarea, select, button { font-family: inherit; font-size: inherit; }
 .success-icon { font-size: 4rem; color: var(--success); margin-bottom: 20px; }
 .order-success h2 { font-family: var(--font-display); margin-bottom: 10px; }
 .order-number { font-size: 1.1rem; margin-bottom: 16px; }
-.success-actions { display: flex; gap: 16px; justify-content: center; margin-top: 30px; }
+.success-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 30px;
+  padding-bottom: 48px;
+}
+.success-actions .btn { min-width: 200px; }
 
 /* ============================================
    CONTACT PAGE
