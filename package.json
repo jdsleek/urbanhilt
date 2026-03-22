@@ -11,7 +11,8 @@
     "dns:set-www": "node scripts/godaddy-dns.js set-www",
     "railway:set-env": "node scripts/railway-set-env.js",
     "railway:add-domain": "node scripts/railway-custom-domain.js",
-    "railway:diagnose": "node scripts/railway-diagnose-deployment.js"
+    "railway:diagnose": "node scripts/railway-diagnose-deployment.js",
+    "railway:link-postgres": "node scripts/railway-link-postgres.js"
   },
   "keywords": [
     "ecommerce",

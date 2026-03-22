@@ -231,6 +231,29 @@ async function resolveTargets(opts) {
   };
 }
 
+/**
+ * Find the Postgres plugin service name for ${{Name.DATABASE_URL}} references.
+ */
+function findPostgresServiceName(services, explicitName) {
+  if (explicitName?.trim()) return explicitName.trim();
+  const edges = services?.edges || [];
+  const pg = edges.filter((e) =>
+    /postgres|postgresql|^pg$/i.test(String(e.node.name || '').trim())
+  );
+  if (pg.length === 0) {
+    throw new Error(
+      'No PostgreSQL service in this project. In Railway: + New → Database → PostgreSQL, then re-run this script.'
+    );
+  }
+  if (pg.length > 1) {
+    const names = pg.map((e) => e.node.name).join(', ');
+    throw new Error(
+      `Multiple Postgres-like services (${names}). Pass --postgres-service-name "ExactName" to pick one.`
+    );
+  }
+  return pg[0].node.name;
+}
+
 module.exports = {
   graphql,
   resolveProjectToken,
@@ -239,4 +262,5 @@ module.exports = {
   resolveEnvironmentId,
   inferAppService,
   pickServiceBySubstring,
+  findPostgresServiceName,
 };

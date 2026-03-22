@@ -24,6 +24,17 @@ npm run railway:set-env -- --env-file .env.railway
 
 (`--service-name foo` if auto-detect isn’t the right service.)
 
+### Live site has no database (`DATABASE_URL` missing)
+
+If the Node service never had `DATABASE_URL`, link it to the project’s **PostgreSQL** plugin (same as `${{Postgres.DATABASE_URL}}` in the dashboard):
+
+```bash
+npm run railway:link-postgres
+# optional: --postgres-service-name "Postgres"  if you have several DB services
+```
+
+Then wait for redeploy and check `https://www.urbanhilt.com/api/health` → `"database": true`.
+
 ## Custom domain via API (optional)
 
 ```bash
