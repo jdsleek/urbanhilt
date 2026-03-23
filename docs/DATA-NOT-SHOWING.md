@@ -30,6 +30,8 @@ curl -s "https://www.urbanhilt.com/api/products?limit=1" | head -c 400
 
 ## 2. Product images missing (migration / uploads)
 
+**Why does Postgres “persist” but photos vanish?** The DB stores **paths**, not JPEG bytes — see **`docs/POSTGRES-VS-UPLOAD-FILES.md`**.
+
 Rows can exist in Postgres but **image URLs** point to `/uploads/...` on **disk**. On a **new** Railway deploy, the **`uploads/`** folder is empty unless you **copy files** from the old server or re-upload in Admin.
 
 **Symptom:** Product names/prices show, **thumbnails blank** or 404 in Network tab for `/uploads/...`.
