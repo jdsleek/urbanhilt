@@ -67,7 +67,11 @@ app.get('/api/store-config', (req, res) => {
 
 ensureUploadsDir();
 app.use(express.static(path.join(__dirname, 'public')));
+// Missing files must not fall through to SPA (would return HTML 200 → broken <img>, no proper onerror).
 app.use('/uploads', express.static(getUploadsDir()));
+app.use('/uploads', (req, res) => {
+  res.status(404).type('text/plain').send('Upload not found');
+});
 
 // Mount admin API before /api so POST /api/admin/login is never swallowed by the public API router
 app.use('/api/admin', adminRoutes);
