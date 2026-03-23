@@ -13,6 +13,27 @@ document.addEventListener('DOMContentLoaded', () => {
   if (slug) loadProduct(slug);
 });
 
+/**
+ * Use when DB points at /uploads/... but file is missing, or server once returned HTML 200.
+ * HEAD avoids a broken decode; pairs with server 404 for missing uploads.
+ */
+async function resolveProductImageUrl(url) {
+  if (!url) return UH.PRODUCT_PLACEHOLDER_IMG;
+  const path = url.startsWith('http')
+    ? url
+    : url.startsWith('/')
+      ? url
+      : `/${url}`;
+  try {
+    const res = await fetch(path, { method: 'HEAD', cache: 'no-store' });
+    const ct = (res.headers.get('content-type') || '').toLowerCase();
+    if (res.ok && ct.includes('image')) return url.startsWith('http') ? url : path;
+    return UH.PRODUCT_PLACEHOLDER_IMG;
+  } catch {
+    return UH.PRODUCT_PLACEHOLDER_IMG;
+  }
+}
+
 async function loadProduct(slug) {
   try {
     const data = await UH.api(`/products/${slug}`);
@@ -48,7 +69,7 @@ async function loadProduct(slug) {
     badges.innerHTML = badgeHTML;
 
     // Images
-    setupGallery(currentProduct.images);
+    await setupGallery(currentProduct.images);
 
     // Sizes
     if (currentProduct.sizes?.length) {
@@ -135,7 +156,7 @@ async function loadProduct(slug) {
   }
 }
 
-function setupGallery(images) {
+async function setupGallery(images) {
   const mainImg = document.getElementById('mainImage');
   const thumbs = document.getElementById('galleryThumbs');
   if (!mainImg) return;
@@ -146,17 +167,19 @@ function setupGallery(images) {
   }
 
   mainImg.style.display = '';
+  const mainSrc = await resolveProductImageUrl(images[0]);
   mainImg.onerror = function onMainImgErr() {
     this.onerror = null;
     this.src = UH.PRODUCT_PLACEHOLDER_IMG;
   };
-  mainImg.src = images[0];
+  mainImg.src = mainSrc;
   mainImg.alt = currentProduct.name;
 
   if (images.length > 1) {
+    const thumbSrcs = await Promise.all(images.map((img) => resolveProductImageUrl(img)));
     thumbs.innerHTML = images.map((img, i) => `
       <div class="gallery-thumb ${i === 0 ? 'active' : ''}" data-index="${i}">
-        <img src="${img}" alt="Thumbnail ${i + 1}" ${UH.productImageFallbackAttr()}>
+        <img src="${thumbSrcs[i]}" alt="Thumbnail ${i + 1}" ${UH.productImageFallbackAttr()}>
       </div>
     `).join('');
 
@@ -179,7 +202,7 @@ function setupGallery(images) {
   });
 }
 
-function updateMainImage() {
+async function updateMainImage() {
   const images = currentProduct.images;
   const galleryMain = document.querySelector('.gallery-main');
   if (galleryMain) galleryMain.classList.remove('zoomed');
@@ -189,7 +212,7 @@ function updateMainImage() {
       this.onerror = null;
       this.src = UH.PRODUCT_PLACEHOLDER_IMG;
     };
-    main.src = images[currentImageIndex];
+    main.src = await resolveProductImageUrl(images[currentImageIndex]);
   }
   document.querySelectorAll('.gallery-thumb').forEach((t, i) => {
     t.classList.toggle('active', i === currentImageIndex);
