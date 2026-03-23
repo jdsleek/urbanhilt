@@ -20,6 +20,14 @@ Optional: **`RAILWAY_PROJECT_TOKEN`** instead of token + project id (project set
 
 ```bash
 npm run railway:set-env -- --env-file .env.railway
+
+**Persistent product images (first-time):** from the repo root with `.env` containing `RAILWAY_TOKEN` + `RAILWAY_PROJECT_ID`:
+
+```bash
+npm run railway:setup-uploads-volume
+```
+
+Creates a Railway volume on the web service (default mount `/data/uploads`) and sets **`UPLOADS_DIR`** to match. Idempotent-ish: if volume already exists, the create step may fail — set **`UPLOADS_DIR`** manually or run `railway:set-env` with `UPLOADS_DIR=/data/uploads`.
 ```
 
 (`--service-name foo` if auto-detect isn’t the right service.)

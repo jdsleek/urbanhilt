@@ -17,6 +17,7 @@
     "migrate:db": "node scripts/migrate-db.js",
     "railway:tcp-postgres": "node scripts/railway-tcp-postgres.js",
     "railway:sync-git-deploy": "node scripts/railway-sync-git-deploy.js",
+    "railway:setup-uploads-volume": "node scripts/railway-setup-uploads-volume.js",
     "audit:images": "node scripts/audit-product-images.js"
   },
   "keywords": [
