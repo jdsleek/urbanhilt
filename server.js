@@ -7,6 +7,7 @@ const apiRoutes = require('./routes/api');
 const adminRoutes = require('./routes/admin');
 const staffRoutes = require('./routes/staff');
 const { getUploadsDir, ensureUploadsDir } = require('./lib/uploadsDir');
+const { uploadsRedirectIfMissingLocally } = require('./lib/uploadsFallback');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -67,6 +68,8 @@ app.get('/api/store-config', (req, res) => {
 
 ensureUploadsDir();
 app.use(express.static(path.join(__dirname, 'public')));
+// If file is missing locally but PUBLIC_UPLOADS_FALLBACK_BASE is set, 302 to that origin (recover overnight uploads from old deploy).
+app.use('/uploads', uploadsRedirectIfMissingLocally());
 // Missing files must not fall through to SPA (would return HTML 200 → broken <img>, no proper onerror).
 app.use('/uploads', express.static(getUploadsDir()));
 app.use('/uploads', (req, res) => {

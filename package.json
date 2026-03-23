@@ -16,7 +16,8 @@
     "railway:materialize-db-url": "node scripts/railway-materialize-db-url.js",
     "migrate:db": "node scripts/migrate-db.js",
     "railway:tcp-postgres": "node scripts/railway-tcp-postgres.js",
-    "railway:sync-git-deploy": "node scripts/railway-sync-git-deploy.js"
+    "railway:sync-git-deploy": "node scripts/railway-sync-git-deploy.js",
+    "audit:images": "node scripts/audit-product-images.js"
   },
   "keywords": [
     "ecommerce",

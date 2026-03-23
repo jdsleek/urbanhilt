@@ -46,6 +46,8 @@ const URBANHILT_KEYS = new Set([
   'PAYSTACK_PUBLIC_KEY',
   'PAYSTACK_SECRET_KEY',
   'PUBLIC_SITE_URL',
+  'UPLOADS_DIR',
+  'PUBLIC_UPLOADS_FALLBACK_BASE',
 ]);
 
 function parseArgs(argv) {

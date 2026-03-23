@@ -45,9 +45,23 @@ By default the app stores files under **`uploads/`** next to the code. On Railwa
 1. In Railway: **Volumes** → add a volume to your **web** service, mount path e.g. **`/data/uploads`**.
 2. Set env var **`UPLOADS_DIR=/data/uploads`** on that service (must match the mount path).
 3. Redeploy. New admin uploads go to the volume and **survive** redeploys.
-4. **Already-lost files** are not recoverable from the app; re-upload in Admin or restore files from a backup into the volume under the same filenames as in the DB.
+4. **Already-lost files** are not recoverable from the app **unless** they still exist on another deployment; see §2b below. Otherwise re-upload in Admin or restore a backup into the volume (same filenames as in the DB).
 
 The storefront still requests **`/uploads/...`**; only the server’s disk path is configurable via **`UPLOADS_DIR`**.
+
+### 2b. “Overnight uploads” disappeared after deploy — temporary recovery
+
+If staff uploaded photos and a **redeploy wiped disk**, the rows in Postgres are still there. The files might still exist on a **previous Railway URL** (the `*.up.railway.app` hostname for the same service) if that instance was not garbage-collected yet — **often they are gone**, but if you still have **any** URL that returns **200** + `image/*` for `GET /uploads/<filename>`, you can bridge the gap:
+
+1. Set **`PUBLIC_UPLOADS_FALLBACK_BASE`** on **www**’s service to that origin, e.g. `https://YOUR-SERVICE.up.railway.app` (no trailing slash). **Must not** be the same hostname as the site (avoid redirect loops).
+2. Redeploy. When a file is missing locally, the app **302-redirects** the browser to the same path on that host so images show again.
+3. **Immediately** add a **Volume** + **`UPLOADS_DIR`**, then **copy** all files from the fallback host (or re-download) into the volume and **remove** `PUBLIC_UPLOADS_FALLBACK_BASE` when done.
+
+Audit which filenames the DB references vs what returns an image:
+
+```bash
+npm run audit:images -- https://www.urbanhilt.com
+```
 
 ## 3. Orders “missing” in Admin
 
