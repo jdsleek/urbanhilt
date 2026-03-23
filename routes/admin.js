@@ -9,6 +9,8 @@ const { query } = require('../db/database');
 const { authenticateAdmin, JWT_SECRET } = require('../middleware/auth');
 const { finalizeAwaitingOrder } = require('../lib/orderFinalize');
 const { parseJsonSafe } = require('../lib/parseJsonSafe');
+const { restoreStockFromOrderItems, orderHadStockDeducted } = require('../lib/stockAdjust');
+const { normalizeStaffRole } = require('../lib/staffRoles');
 
 function slugifyProductName(name) {
   return (
@@ -104,7 +106,7 @@ router.get('/dashboard', authenticateAdmin, async (req, res) => {
     const totalOrders = (await query('SELECT COUNT(*) as count FROM orders')).rows[0].count;
     const totalRevenue = (
       await query(
-        `SELECT COALESCE(SUM(total), 0) as sum FROM orders WHERE status NOT IN ('cancelled', 'awaiting_staff')`
+        `SELECT COALESCE(SUM(total), 0) as sum FROM orders WHERE status NOT IN ('cancelled', 'awaiting_staff', 'refunded')`
       )
     ).rows[0].sum;
     const pendingOrders = (await query('SELECT COUNT(*) as count FROM orders WHERE status = $1', ['pending'])).rows[0]
@@ -129,7 +131,7 @@ router.get('/dashboard', authenticateAdmin, async (req, res) => {
 
     const { rows: monthlyOrders } = await query(`
       SELECT TO_CHAR(created_at, 'YYYY-MM') as month, COUNT(*) as orders, SUM(total) as revenue 
-      FROM orders WHERE status NOT IN ('cancelled', 'awaiting_staff') GROUP BY month ORDER BY month DESC LIMIT 12
+      FROM orders WHERE status NOT IN ('cancelled', 'awaiting_staff', 'refunded') GROUP BY month ORDER BY month DESC LIMIT 12
     `);
 
     res.json({
@@ -355,8 +357,25 @@ router.get('/orders', authenticateAdmin, async (req, res) => {
 
 router.put('/orders/:id', authenticateAdmin, async (req, res) => {
   try {
-    const { status } = req.body;
-    await query('UPDATE orders SET status = $1 WHERE id = $2', [status, req.params.id]);
+    const { status, cancellation_reason } = req.body;
+    const { rows } = await query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+    const prev = rows[0];
+    if (!prev) return res.status(404).json({ error: 'Order not found' });
+
+    if (status === 'cancelled' && prev.status !== 'cancelled') {
+      const reason = (cancellation_reason && String(cancellation_reason).trim()) || 'Cancelled in admin';
+      if (orderHadStockDeducted(prev.status)) {
+        await restoreStockFromOrderItems(prev.items);
+      }
+      await query(
+        `UPDATE orders SET status = 'cancelled', cancellation_reason = $1, cancelled_at = NOW(),
+         cancelled_by_staff_id = NULL, updated_at = NOW() WHERE id = $2`,
+        [reason, req.params.id]
+      );
+      return res.json({ message: 'Order cancelled; stock restored when applicable' });
+    }
+
+    await query('UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2', [status, req.params.id]);
     res.json({ message: 'Order updated' });
   } catch (e) {
     console.error(e);
@@ -407,6 +426,11 @@ router.post('/orders/:id/verify-payment', authenticateAdmin, async (req, res) =>
 
 router.delete('/orders/:id', authenticateAdmin, async (req, res) => {
   try {
+    const { rows } = await query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+    const prev = rows[0];
+    if (prev && orderHadStockDeducted(prev.status)) {
+      await restoreStockFromOrderItems(prev.items);
+    }
     await query('DELETE FROM orders WHERE id = $1', [req.params.id]);
     res.json({ message: 'Order deleted' });
   } catch (e) {
@@ -434,7 +458,7 @@ router.get('/subscribers', authenticateAdmin, async (req, res) => {
 router.get('/sales-staff', authenticateAdmin, async (req, res) => {
   try {
     const { rows } = await query(
-      `SELECT id, name, job_title, phone, email, photo_url, staff_code, active, created_at
+      `SELECT id, name, job_title, staff_role, phone, email, photo_url, staff_code, active, created_at
        FROM sales_staff ORDER BY name ASC`
     );
     res.json({ staff: rows });
@@ -446,19 +470,21 @@ router.get('/sales-staff', authenticateAdmin, async (req, res) => {
 
 router.post('/sales-staff', authenticateAdmin, async (req, res) => {
   try {
-    const { name, pin, job_title, phone, email, photo_url, staff_code } = req.body;
+    const { name, pin, job_title, phone, email, photo_url, staff_code, staff_role } = req.body;
     if (!name || !pin || String(pin).length < 4) {
       return res.status(400).json({ error: 'Name and PIN (min 4 digits) required' });
     }
     const pin_hash = bcrypt.hashSync(String(pin), 10);
+    const role = normalizeStaffRole(staff_role);
     const { rows } = await query(
-      `INSERT INTO sales_staff (name, pin_hash, job_title, phone, email, photo_url, staff_code)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id, name, job_title, phone, email, photo_url, staff_code, active, created_at`,
+      `INSERT INTO sales_staff (name, pin_hash, job_title, staff_role, phone, email, photo_url, staff_code)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id, name, job_title, staff_role, phone, email, photo_url, staff_code, active, created_at`,
       [
         name.trim(),
         pin_hash,
         job_title?.trim() || null,
+        role,
         phone?.trim() || null,
         email?.trim() || null,
         photo_url?.trim() || null,
@@ -475,21 +501,23 @@ router.post('/sales-staff', authenticateAdmin, async (req, res) => {
 router.put('/sales-staff/:id', authenticateAdmin, async (req, res) => {
   try {
     const id = req.params.id;
-    const { name, pin, active, job_title, phone, email, photo_url, staff_code } = req.body;
+    const { name, pin, active, job_title, phone, email, photo_url, staff_code, staff_role } = req.body;
     const act = active === false ? 0 : active === true ? 1 : null;
+    const role = staff_role != null ? normalizeStaffRole(staff_role) : null;
 
     if (pin && String(pin).length >= 4) {
       const pin_hash = bcrypt.hashSync(String(pin), 10);
       await query(
         `UPDATE sales_staff SET
           name = $1, pin_hash = $2, active = $3,
-          job_title = $4, phone = $5, email = $6, photo_url = $7, staff_code = $8
-         WHERE id = $9`,
+          job_title = $4, staff_role = COALESCE($5, staff_role), phone = $6, email = $7, photo_url = $8, staff_code = $9
+         WHERE id = $10`,
         [
           (name && String(name).trim()) || 'Staff',
           pin_hash,
           act !== null ? act : 1,
           job_title?.trim() || null,
+          role,
           phone?.trim() || null,
           email?.trim() || null,
           photo_url?.trim() || null,
@@ -502,12 +530,13 @@ router.put('/sales-staff/:id', authenticateAdmin, async (req, res) => {
         `UPDATE sales_staff SET
           name = COALESCE($1, name),
           active = COALESCE($2, active),
-          job_title = $3, phone = $4, email = $5, photo_url = $6, staff_code = $7
-         WHERE id = $8`,
+          job_title = $3, staff_role = COALESCE($4, staff_role), phone = $5, email = $6, photo_url = $7, staff_code = $8
+         WHERE id = $9`,
         [
           name?.trim() || null,
           act,
           job_title?.trim() || null,
+          role,
           phone?.trim() || null,
           email?.trim() || null,
           photo_url?.trim() || null,

@@ -179,8 +179,33 @@ async function initDatabase() {
     ALTER TABLE sales_staff ADD COLUMN IF NOT EXISTS email TEXT;
     ALTER TABLE sales_staff ADD COLUMN IF NOT EXISTS photo_url TEXT;
     ALTER TABLE sales_staff ADD COLUMN IF NOT EXISTS staff_code TEXT;
+    ALTER TABLE sales_staff ADD COLUMN IF NOT EXISTS staff_role TEXT DEFAULT 'staff';
   `)
     .catch((e) => console.error('  ✗ sales_staff column migration:', e.message || e));
+
+  await pool
+    .query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMP;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancellation_reason TEXT;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancelled_by_staff_id INTEGER REFERENCES sales_staff(id) ON DELETE SET NULL;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS refunded_amount NUMERIC DEFAULT 0;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS refund_status TEXT DEFAULT 'none';
+  `)
+    .catch((e) => console.error('  ✗ orders cancellation/refund columns:', e.message || e));
+
+  await pool
+    .query(`
+    CREATE TABLE IF NOT EXISTS order_refunds (
+      id SERIAL PRIMARY KEY,
+      order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+      amount NUMERIC NOT NULL,
+      reason TEXT,
+      staff_id INTEGER REFERENCES sales_staff(id) ON DELETE SET NULL,
+      restock INTEGER DEFAULT 1,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `)
+    .catch((e) => console.error('  ✗ order_refunds table:', e.message || e));
 
   console.log('  ✓ Database initialized successfully');
 }

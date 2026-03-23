@@ -7,7 +7,7 @@ const { parseJsonSafe } = require('../lib/parseJsonSafe');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'urbanhilt-luxury-2024-secret-key';
 const CUSTOMER_SECRET = process.env.CUSTOMER_SECRET || 'uh-customer-secret-2024';
-const { signStaffToken, requireStaffCheckout, optionalStaffAuth } = require('../middleware/staff');
+const { requireStaffCheckout, optionalStaffAuth } = require('../middleware/staff');
 const { finalizeAwaitingOrder } = require('../lib/orderFinalize');
 
 function requireStaffConfirmationMode() {
@@ -215,45 +215,7 @@ router.get('/store-config', async (req, res) => {
   }
 });
 
-// ==================== SALES STAFF PIN ====================
-router.post('/staff/login', async (req, res) => {
-  try {
-    const { pin } = req.body || {};
-    if (!pin || String(pin).length < 4) {
-      return res.status(400).json({ error: 'Enter a valid PIN' });
-    }
-    const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress || '';
-    const ua = req.headers['user-agent'] || '';
-    const { rows } = await query('SELECT * FROM sales_staff WHERE active = 1');
-    for (const s of rows) {
-      if (bcrypt.compareSync(String(pin), s.pin_hash)) {
-        await query(
-          `INSERT INTO staff_access_logs (staff_id, event_type, detail, ip, user_agent) VALUES ($1,$2,$3,$4,$5)`,
-          [s.id, 'login_success', JSON.stringify({ name: s.name }), ip, ua]
-        );
-        const token = signStaffToken({ id: s.id, name: s.name });
-        const staffProfile = {
-          id: s.id,
-          name: s.name,
-          job_title: s.job_title || null,
-          phone: s.phone || null,
-          email: s.email || null,
-          photo_url: s.photo_url || null,
-          staff_code: s.staff_code || null,
-        };
-        return res.json({ token, staff: staffProfile });
-      }
-    }
-    await query(
-      `INSERT INTO staff_access_logs (staff_id, event_type, detail, ip, user_agent) VALUES (NULL,$1,$2,$3,$4)`,
-      ['login_failed', JSON.stringify({ reason: 'bad_pin' }), ip, ua]
-    );
-    res.status(401).json({ error: 'Invalid PIN' });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+// Staff PIN login: POST /api/staff/login (routes/staff.js)
 
 router.get('/discounts/validate', async (req, res) => {
   try {

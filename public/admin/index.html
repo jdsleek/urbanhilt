@@ -72,49 +72,122 @@
       <div class="admin-content">
         <!-- Dashboard Page -->
         <div class="admin-page active" id="page-dashboard">
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-icon" style="background:#c9a96e22;color:#c9a96e"><i class="fas fa-box"></i></div>
-              <div class="stat-info"><h3 id="statProducts">0</h3><p>Products</p></div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon" style="background:#3b82f622;color:#3b82f6"><i class="fas fa-shopping-cart"></i></div>
-              <div class="stat-info"><h3 id="statOrders">0</h3><p>Total Orders</p></div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon" style="background:#10b98122;color:#10b981"><i class="fas fa-naira-sign"></i></div>
-              <div class="stat-info"><h3 id="statRevenue">₦0</h3><p>Revenue</p></div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon" style="background:#f59e0b22;color:#f59e0b"><i class="fas fa-clock"></i></div>
-              <div class="stat-info"><h3 id="statPending">0</h3><p>Pending <span style="font-weight:400;font-size:0.75rem;color:#888;">(approved)</span></p></div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon" style="background:#fcd34d22;color:#b45309"><i class="fas fa-hourglass-half"></i></div>
-              <div class="stat-info"><h3 id="statAwaitingStaff">0</h3><p>Awaiting staff <span style="font-weight:400;font-size:0.75rem;color:#888;">(submitted online)</span></p></div>
-            </div>
-          </div>
-          <div class="dashboard-grid">
-            <div class="dashboard-card">
-              <h3>Recent Orders</h3>
-              <div class="table-wrap">
-                <table class="admin-table">
-                  <thead><tr><th>Order #</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
-                  <tbody id="recentOrdersTable"></tbody>
-                </table>
+          <header class="admin-page-intro">
+            <h1 class="admin-page-title">Dashboard</h1>
+            <p class="admin-page-subtitle">Store performance, revenue trend, and latest orders at a glance.</p>
+          </header>
+
+          <section class="dashboard-section" aria-label="Key metrics">
+            <div class="stats-grid">
+              <div class="stat-card stat-card--products">
+                <div class="stat-icon"><i class="fas fa-box" aria-hidden="true"></i></div>
+                <div class="stat-body">
+                  <span class="stat-value tabular-nums" id="statProducts">0</span>
+                  <span class="stat-label">Products</span>
+                </div>
+              </div>
+              <div class="stat-card stat-card--orders">
+                <div class="stat-icon"><i class="fas fa-shopping-cart" aria-hidden="true"></i></div>
+                <div class="stat-body">
+                  <span class="stat-value tabular-nums" id="statOrders">0</span>
+                  <span class="stat-label">Total orders</span>
+                </div>
+              </div>
+              <div class="stat-card stat-card--revenue">
+                <div class="stat-icon"><i class="fas fa-naira-sign" aria-hidden="true"></i></div>
+                <div class="stat-body">
+                  <span class="stat-value tabular-nums" id="statRevenue">₦0</span>
+                  <span class="stat-label">Revenue</span>
+                  <span class="stat-hint">Excl. cancelled &amp; awaiting staff</span>
+                </div>
+              </div>
+              <div class="stat-card stat-card--pending">
+                <div class="stat-icon"><i class="fas fa-clock" aria-hidden="true"></i></div>
+                <div class="stat-body">
+                  <span class="stat-value tabular-nums" id="statPending">0</span>
+                  <span class="stat-label">Pending</span>
+                  <span class="stat-hint">Approved, ready to process</span>
+                </div>
+              </div>
+              <div class="stat-card stat-card--awaiting">
+                <div class="stat-icon"><i class="fas fa-hourglass-half" aria-hidden="true"></i></div>
+                <div class="stat-body">
+                  <span class="stat-value tabular-nums" id="statAwaitingStaff">0</span>
+                  <span class="stat-label">Awaiting staff</span>
+                  <span class="stat-hint">Submitted online</span>
+                </div>
+              </div>
+              <div class="stat-card stat-card--subs">
+                <div class="stat-icon"><i class="fas fa-envelope" aria-hidden="true"></i></div>
+                <div class="stat-body">
+                  <span class="stat-value tabular-nums" id="statSubscribers">0</span>
+                  <span class="stat-label">Newsletter</span>
+                  <span class="stat-hint">Subscribers</span>
+                </div>
               </div>
             </div>
-          </div>
+          </section>
+
+          <section class="dashboard-section dashboard-panels" aria-label="Charts and activity">
+            <article class="admin-panel panel-recent-orders">
+              <div class="admin-panel-head">
+                <h2 class="admin-panel-title">Recent orders</h2>
+                <p class="admin-panel-desc">Latest 10 across all statuses</p>
+              </div>
+              <div class="admin-panel-body">
+                <div class="table-wrap">
+                  <table class="admin-table admin-table--recent">
+                    <thead>
+                      <tr>
+                        <th scope="col">Order #</th>
+                        <th scope="col">Customer</th>
+                        <th scope="col" class="th-numeric">Total</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody id="recentOrdersTable"></tbody>
+                  </table>
+                </div>
+              </div>
+            </article>
+
+            <article class="admin-panel panel-revenue-chart" id="dashboardChartPanel" hidden>
+              <div class="admin-panel-head">
+                <h2 class="admin-panel-title">Revenue &amp; orders</h2>
+                <p class="admin-panel-desc">Last 6 months (paid / confirmed orders)</p>
+              </div>
+              <div class="admin-panel-body">
+                <div id="dashboardChartMount" class="dashboard-chart-mount" aria-hidden="true"></div>
+              </div>
+            </article>
+          </section>
+
+          <section class="dashboard-section" id="dashboardTopSection" hidden aria-label="Catalog highlights">
+            <article class="admin-panel panel-top-products">
+              <div class="admin-panel-head">
+                <h2 class="admin-panel-title">Catalog highlights</h2>
+                <p class="admin-panel-desc">Best sellers &amp; recent listings</p>
+              </div>
+              <div class="admin-panel-body">
+                <div class="top-products-grid" id="dashboardTopProductsMount"></div>
+              </div>
+            </article>
+          </section>
         </div>
 
         <!-- Products Page -->
         <div class="admin-page" id="page-products">
-          <div class="page-actions">
-            <button class="btn btn-primary" id="addProductBtn"><i class="fas fa-plus"></i> Add Product</button>
-          </div>
-          <div class="table-wrap">
+          <header class="admin-page-intro admin-page-intro--row">
+            <div>
+              <h1 class="admin-page-title">Products</h1>
+              <p class="admin-page-subtitle">Manage inventory, pricing, and images.</p>
+            </div>
+            <button class="btn btn-primary" id="addProductBtn"><i class="fas fa-plus"></i> Add product</button>
+          </header>
+          <div class="table-wrap admin-panel-flat">
             <table class="admin-table">
-              <thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Featured</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Image</th><th>Name</th><th>Category</th><th class="th-numeric">Price</th><th class="th-numeric">Stock</th><th>Featured</th><th>Actions</th></tr></thead>
               <tbody id="productsTable"></tbody>
             </table>
           </div>
@@ -122,10 +195,14 @@
 
         <!-- Categories Page -->
         <div class="admin-page" id="page-categories">
-          <div class="page-actions">
-            <button class="btn btn-primary" id="addCategoryBtn"><i class="fas fa-plus"></i> Add Category</button>
-          </div>
-          <div class="table-wrap">
+          <header class="admin-page-intro admin-page-intro--row">
+            <div>
+              <h1 class="admin-page-title">Categories</h1>
+              <p class="admin-page-subtitle">Organize products for the storefront.</p>
+            </div>
+            <button class="btn btn-primary" id="addCategoryBtn"><i class="fas fa-plus"></i> Add category</button>
+          </header>
+          <div class="table-wrap admin-panel-flat">
             <table class="admin-table">
               <thead><tr><th>Name</th><th>Slug</th><th>Products</th><th>Actions</th></tr></thead>
               <tbody id="categoriesTable"></tbody>
@@ -135,30 +212,39 @@
 
         <!-- Orders Page -->
         <div class="admin-page" id="page-orders">
-          <p style="color:#666;font-size:0.88rem;margin-bottom:12px;max-width:720px;">
-            <strong>Tip:</strong> With <code>REQUIRE_STAFF_CHECKOUT=true</code>, website orders start as <strong>Awaiting staff</strong> (not Pending). Use <strong>All</strong> or <strong>Awaiting staff</strong>. This page resets to <strong>All</strong> each time you open Orders. If checkout works but nothing appears here, the store and admin are likely on different databases — same site URL in the sidebar for both.
-          </p>
-          <div class="page-actions" style="flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:12px;">
-            <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;color:#555;">
-              <span>Find order #</span>
-              <input type="text" id="orderSearchInput" placeholder="e.g. UH-MN2B71G0-TEUA" autocomplete="off" style="padding:8px 12px;border:1px solid #ddd;border-radius:6px;min-width:220px;">
-              <button type="button" class="btn btn-sm btn-primary" id="orderSearchBtn">Search</button>
-            </label>
+          <header class="admin-page-intro">
+            <h1 class="admin-page-title">Orders</h1>
+            <p class="admin-page-subtitle">Search, filter, and update fulfillment status.</p>
+          </header>
+          <div class="admin-callout" role="note">
+            <i class="fas fa-lightbulb" aria-hidden="true"></i>
+            <p><strong>Tip:</strong> With <code>REQUIRE_STAFF_CHECKOUT=true</code>, website orders start as <strong>Awaiting staff</strong> (not Pending). Use <strong>All</strong> or <strong>Awaiting staff</strong>. This page resets to <strong>All</strong> each time you open Orders. If checkout works but nothing appears here, the store and admin may be using different databases — confirm the same site URL in the sidebar for both.</p>
           </div>
-          <div class="page-actions">
-            <div class="order-filters">
-              <button class="btn btn-sm active" data-status="">All</button>
-              <button class="btn btn-sm" data-status="awaiting_staff">Awaiting staff</button>
-              <button class="btn btn-sm" data-status="pending">Pending</button>
-              <button class="btn btn-sm" data-status="processing">Processing</button>
-              <button class="btn btn-sm" data-status="shipped">Shipped</button>
-              <button class="btn btn-sm" data-status="delivered">Delivered</button>
-              <button class="btn btn-sm" data-status="cancelled">Cancelled</button>
+          <div class="orders-toolbar">
+            <div class="orders-search">
+              <label class="orders-search-label" for="orderSearchInput">Find order #</label>
+              <div class="orders-search-row">
+                <input type="text" id="orderSearchInput" class="orders-search-input" placeholder="e.g. UH-MN2B71G0-TEUA" autocomplete="off">
+                <button type="button" class="btn btn-sm btn-primary" id="orderSearchBtn">Search</button>
+              </div>
+            </div>
+            <div class="order-filters-wrap">
+              <span class="order-filters-label">Status</span>
+              <div class="order-filters">
+                <button type="button" class="btn btn-sm active" data-status="">All</button>
+                <button type="button" class="btn btn-sm" data-status="awaiting_staff">Awaiting staff</button>
+                <button type="button" class="btn btn-sm" data-status="pending">Pending</button>
+                <button type="button" class="btn btn-sm" data-status="processing">Processing</button>
+                <button type="button" class="btn btn-sm" data-status="shipped">Shipped</button>
+                <button type="button" class="btn btn-sm" data-status="delivered">Delivered</button>
+                <button type="button" class="btn btn-sm" data-status="cancelled">Cancelled</button>
+                <button type="button" class="btn btn-sm" data-status="refunded">Refunded</button>
+              </div>
             </div>
           </div>
-          <div class="table-wrap">
+          <div class="table-wrap admin-panel-flat">
             <table class="admin-table">
-              <thead><tr><th>Order #</th><th>Customer</th><th>Phone</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Order #</th><th>Customer</th><th>Phone</th><th>Items</th><th class="th-numeric">Total</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
               <tbody id="ordersTable"></tbody>
             </table>
           </div>
@@ -166,16 +252,19 @@
 
         <!-- Sales staff -->
         <div class="admin-page" id="page-sales-staff">
-          <div class="page-actions">
+          <header class="admin-page-intro admin-page-intro--row">
+            <div>
+              <h1 class="admin-page-title">Sales staff</h1>
+              <p class="admin-page-subtitle">POS sign-in, PINs, and team profiles.</p>
+            </div>
             <button class="btn btn-primary" id="addStaffBtn"><i class="fas fa-plus"></i> Add sales staff</button>
+          </header>
+          <div class="admin-callout admin-callout--muted">
+            <p><strong>Store team</strong> — profiles for sales reps who talk to customers, verify payments, and approve orders on POS. <strong>Admin</strong> is the owner/manager: full access here and can override anything; day‑to‑day selling is usually staff.</p>
           </div>
-          <p style="color:#666;font-size:0.9rem;margin-bottom:16px;">
-            <strong>Store team</strong> — profiles for sales reps who talk to customers, verify payments, and approve orders on POS.
-            <strong>Admin</strong> is the owner/manager: full access here, can override anything, but day‑to‑day selling is staff.
-          </p>
-          <div class="table-wrap">
+          <div class="table-wrap admin-panel-flat">
             <table class="admin-table">
-              <thead><tr><th>Code</th><th>Name</th><th>Role</th><th>Phone</th><th>Email</th><th>Active</th><th>Created</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Code</th><th>Name</th><th>Title</th><th>Access</th><th>Phone</th><th>Email</th><th>Active</th><th>Created</th><th>Actions</th></tr></thead>
               <tbody id="salesStaffTable"></tbody>
             </table>
           </div>
@@ -183,10 +272,14 @@
 
         <!-- Discount codes -->
         <div class="admin-page" id="page-discount-codes">
-          <div class="page-actions">
+          <header class="admin-page-intro admin-page-intro--row">
+            <div>
+              <h1 class="admin-page-title">Discount codes</h1>
+              <p class="admin-page-subtitle">Promotions and cart rules.</p>
+            </div>
             <button class="btn btn-primary" id="addDiscountBtn"><i class="fas fa-plus"></i> Add discount code</button>
-          </div>
-          <div class="table-wrap">
+          </header>
+          <div class="table-wrap admin-panel-flat">
             <table class="admin-table">
               <thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Min ₦</th><th>Uses</th><th>Active</th><th>Actions</th></tr></thead>
               <tbody id="discountCodesTable"></tbody>
@@ -196,8 +289,11 @@
 
         <!-- Staff access logs -->
         <div class="admin-page" id="page-staff-logs">
-          <p style="color:#666;font-size:0.9rem;margin-bottom:16px;">PIN attempts, sign-ins, and staff-placed orders (latest 200).</p>
-          <div class="table-wrap">
+          <header class="admin-page-intro">
+            <h1 class="admin-page-title">Staff access logs</h1>
+            <p class="admin-page-subtitle">PIN attempts, sign-ins, and staff-placed orders (latest 200).</p>
+          </header>
+          <div class="table-wrap admin-panel-flat">
             <table class="admin-table">
               <thead><tr><th>Time</th><th>Event</th><th>Staff</th><th>Detail</th><th>IP</th></tr></thead>
               <tbody id="staffLogsTable"></tbody>
@@ -207,7 +303,11 @@
 
         <!-- Subscribers Page -->
         <div class="admin-page" id="page-subscribers">
-          <div class="table-wrap">
+          <header class="admin-page-intro">
+            <h1 class="admin-page-title">Newsletter subscribers</h1>
+            <p class="admin-page-subtitle">Emails captured from the storefront form.</p>
+          </header>
+          <div class="table-wrap admin-panel-flat">
             <table class="admin-table">
               <thead><tr><th>Email</th><th>Date Subscribed</th></tr></thead>
               <tbody id="subscribersTable"></tbody>
@@ -319,7 +419,16 @@
             <div class="form-group"><label>Display name *</label><input type="text" id="staffName" required autocomplete="off" placeholder="e.g. Ada O."></div>
             <div class="form-group"><label>Staff code</label><input type="text" id="staffCode" autocomplete="off" placeholder="e.g. UH-S02"></div>
           </div>
-          <div class="form-group"><label>Job title / role</label><input type="text" id="staffJobTitle" autocomplete="off" placeholder="Sales associate, Floor lead…"></div>
+          <div class="form-row form-row-2">
+            <div class="form-group"><label>Job title</label><input type="text" id="staffJobTitle" autocomplete="off" placeholder="Sales associate, Floor lead…"></div>
+            <div class="form-group"><label>Access role</label>
+              <select id="staffAccessRole">
+                <option value="staff">Staff — POS, confirmations, own sales, receipts</option>
+                <option value="supervisor">Supervisor — all transactions, cancel (restock), refunds, reports</option>
+              </select>
+              <small style="display:block;margin-top:6px;font-size:0.75rem;color:#888;">Admin login (separate) always has full control.</small>
+            </div>
+          </div>
           <div class="form-row form-row-2">
             <div class="form-group"><label>Phone (customer-facing)</label><input type="tel" id="staffPhone" autocomplete="off" placeholder="+234…"></div>
             <div class="form-group"><label>Email</label><input type="email" id="staffEmail" autocomplete="off"></div>

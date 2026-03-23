@@ -74,6 +74,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (e) { /* ignore */ }
   document.getElementById('posStaffLabel').textContent = label;
 
+  try {
+    const last = sessionStorage.getItem('uh_pos_last_order');
+    const lr = document.getElementById('posLastReceipt');
+    if (last && lr) {
+      lr.href = '/receipt.html?order=' + encodeURIComponent(last);
+      lr.style.display = '';
+    }
+  } catch (e) { /* ignore */ }
+
   let searchT;
   document.getElementById('posSearch').addEventListener('input', (e) => {
     clearTimeout(searchT);
@@ -201,7 +210,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     const data = await res.json();
     if (data.order) {
-      UH.showToast('Order ' + data.order.order_number, 'fa-check');
+      const onum = data.order.order_number;
+      try {
+        sessionStorage.setItem('uh_pos_last_order', onum);
+      } catch (e) { /* ignore */ }
+      UH.showToast('Order ' + onum, 'fa-check');
+      const lr = document.getElementById('posLastReceipt');
+      if (lr) {
+        lr.href = '/receipt.html?order=' + encodeURIComponent(onum);
+        lr.style.display = '';
+      }
       posCart = [];
       renderPosCart();
       document.getElementById('posCustName').value = '';

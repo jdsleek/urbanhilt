@@ -19,7 +19,7 @@ function optionalStaffAuth(req, res, next) {
   try {
     const decoded = verifyStaffToken(authHeader.split(' ')[1]);
     if (decoded.type === 'staff') {
-      req.staff = { id: decoded.id, name: decoded.name };
+      req.staff = { id: decoded.id, name: decoded.name, role: decoded.role || 'staff' };
     }
   } catch {
     /* invalid token — treat as customer */
@@ -42,10 +42,25 @@ function requireStaffCheckout(req, res, next) {
   }
   try {
     const decoded = verifyStaffToken(authHeader.split(' ')[1]);
-    req.staff = { id: decoded.id, name: decoded.name };
+    req.staff = { id: decoded.id, name: decoded.name, role: decoded.role || 'staff' };
     next();
   } catch {
     return res.status(401).json({ error: 'Invalid or expired staff session. Sign in again.', code: 'STAFF_INVALID' });
+  }
+}
+
+/** Any staff-only API (portal, receipts) — does not depend on REQUIRE_STAFF_CHECKOUT. */
+function requireStaffAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Staff sign-in required', code: 'STAFF_REQUIRED' });
+  }
+  try {
+    const decoded = verifyStaffToken(authHeader.split(' ')[1]);
+    req.staff = { id: decoded.id, name: decoded.name, role: decoded.role || 'staff' };
+    next();
+  } catch {
+    return res.status(401).json({ error: 'Invalid or expired staff session', code: 'STAFF_INVALID' });
   }
 }
 
@@ -53,6 +68,7 @@ module.exports = {
   signStaffToken,
   verifyStaffToken,
   requireStaffCheckout,
+  requireStaffAuth,
   optionalStaffAuth,
   STAFF_JWT_SECRET,
 };

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff hub — URBAN HILT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/staff-portal.css">
+</head>
+<body class="staff-portal-body">
+  <header class="sp-header">
+    <div>
+      <div class="sp-brand">URBAN HILT</div>
+      <div class="sp-user" id="spUserLine">…</div>
+    </div>
+    <nav class="sp-nav">
+      <a href="/pos.html" class="primary"><i class="fas fa-cash-register"></i> POS / Checkout</a>
+      <a href="/"><i class="fas fa-store"></i> Store</a>
+      <button type="button" id="spLogout"><i class="fas fa-sign-out-alt"></i> Sign out</button>
+    </nav>
+  </header>
+
+  <main class="sp-main">
+    <p class="sp-hint">
+      <strong>Awaiting confirmation</strong> — website orders until payment is verified and the sale is approved (stock moves then).
+      <strong>Supervisors</strong> see all transactions, can cancel confirmed orders (restores stock), and record refunds.
+      <strong>Admin</strong> (separate login) has full control including products and all staff.
+    </p>
+
+    <div class="sp-tabs">
+      <button type="button" class="sp-tab active" data-tab="awaiting">Awaiting confirmation</button>
+      <button type="button" class="sp-tab" data-tab="mine">My transactions</button>
+      <button type="button" class="sp-tab" id="spTabAll" data-tab="all" style="display:none;">All transactions</button>
+      <button type="button" class="sp-tab" data-tab="closed">Cancelled &amp; refunded</button>
+      <button type="button" class="sp-tab" id="spTabReports" data-tab="reports" style="display:none;">Sales by staff</button>
+    </div>
+
+    <div id="spPanel-awaiting" class="sp-panel active">
+      <div id="spAwaitingBody"></div>
+    </div>
+    <div id="spPanel-mine" class="sp-panel">
+      <div id="spMineBody"></div>
+    </div>
+    <div id="spPanel-all" class="sp-panel">
+      <div id="spAllBody"></div>
+    </div>
+    <div id="spPanel-closed" class="sp-panel">
+      <div id="spClosedBody"></div>
+      <div id="spRefundedBody" style="margin-top:24px;"></div>
+    </div>
+    <div id="spPanel-reports" class="sp-panel">
+      <div id="spReportsBody"></div>
+    </div>
+  </main>
+
+  <div class="sp-modal-overlay" id="spCancelModal">
+    <div class="sp-modal">
+      <h3>Cancel order</h3>
+      <label>Reason (required)</label>
+      <textarea id="spCancelReason" placeholder="Customer requested…"></textarea>
+      <div class="sp-modal-actions">
+        <button type="button" id="spCancelClose">Back</button>
+        <button type="button" id="spCancelSubmit" class="primary" style="background:var(--sp-accent);border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600;">Confirm cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sp-modal-overlay" id="spRefundModal">
+    <div class="sp-modal">
+      <h3 id="spRefundModalTitle">Refund</h3>
+      <label><input type="checkbox" id="spRefundFull" checked> Full refund (restores inventory)</label>
+      <label>Amount (₦)</label>
+      <input type="number" id="spRefundAmount" step="0.01" min="0">
+      <label>Reason (required)</label>
+      <textarea id="spRefundReason" placeholder="Customer return…"></textarea>
+      <div class="sp-modal-actions">
+        <button type="button" id="spRefundClose">Back</button>
+        <button type="button" id="spRefundSubmit" style="background:var(--sp-success);border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600;color:#fff;">Record refund</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/staff-portal.js"></script>
+</body>
+</html>

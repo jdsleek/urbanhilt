@@ -6,6 +6,7 @@ const { initDatabase, query } = require('./db/database');
 const { seedDatabase } = require('./db/seed');
 const apiRoutes = require('./routes/api');
 const adminRoutes = require('./routes/admin');
+const staffRoutes = require('./routes/staff');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -69,6 +70,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Mount admin API before /api so POST /api/admin/login is never swallowed by the public API router
 app.use('/api/admin', adminRoutes);
+// Staff PIN login + portal (must be before generic /api so /api/staff/login matches here)
+app.use('/api/staff', staffRoutes);
 app.use('/api', apiRoutes);
 
 // Admin SPA (Express path '/admin/*' is not a glob — use a regex)

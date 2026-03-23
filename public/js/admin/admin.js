@@ -240,8 +240,16 @@ async function loadDashboard() {
     document.getElementById('statPending').textContent = '—';
     const awaitEl = document.getElementById('statAwaitingStaff');
     if (awaitEl) awaitEl.textContent = '—';
+    const subElErr = document.getElementById('statSubscribers');
+    if (subElErr) subElErr.textContent = '—';
+    const chartPanelErr = document.getElementById('dashboardChartPanel');
+    const chartMountErr = document.getElementById('dashboardChartMount');
+    if (chartPanelErr) chartPanelErr.hidden = true;
+    if (chartMountErr) chartMountErr.innerHTML = '';
+    const topSecErr = document.getElementById('dashboardTopSection');
+    if (topSecErr) topSecErr.hidden = true;
     document.getElementById('recentOrdersTable').innerHTML =
-      `<tr><td colspan="5" style="text-align:center;color:#c00;">Dashboard failed: ${escapeHtml(data.error || 'Error')} (HTTP ${data.httpStatus || '?'})</td></tr>`;
+      `<tr><td colspan="5" class="table-empty table-empty--error">Dashboard failed: ${escapeHtml(data.error || 'Error')} (HTTP ${data.httpStatus || '?'})</td></tr>`;
     return;
   }
 
@@ -252,39 +260,61 @@ async function loadDashboard() {
   const awaitEl = document.getElementById('statAwaitingStaff');
   if (awaitEl) awaitEl.textContent = data.awaitingStaffOrders ?? 0;
   const subEl = document.getElementById('statSubscribers');
-  if (subEl) subEl.textContent = data.totalSubscribers || 0;
+  if (subEl) subEl.textContent = data.subscribers ?? 0;
 
-  // Render monthly revenue/orders bar chart
-  if (data.monthlyOrders && data.monthlyOrders.length > 0) {
-    const months = data.monthlyOrders.slice(-6);
-    const maxRevenue = Math.max(...months.map(m => m.revenue || 0), 1);
-
-    let chartHTML = `
-      <div class="dashboard-chart" style="grid-column:1/-1;background:#fff;border-radius:12px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,0.08);margin-top:24px;">
-        <h3 style="margin:0 0 20px;font-size:1.1rem;color:#333;">Monthly Revenue &amp; Orders</h3>
-        <div style="display:flex;align-items:flex-end;gap:12px;height:200px;padding:0 8px;">
+  const chartPanel = document.getElementById('dashboardChartPanel');
+  const chartMount = document.getElementById('dashboardChartMount');
+  if (chartPanel && chartMount) {
+    chartMount.innerHTML = '';
+    if (data.monthlyOrders && data.monthlyOrders.length > 0) {
+      const months = data.monthlyOrders.slice(-6);
+      const maxRevenue = Math.max(...months.map(m => Number(m.revenue) || 0), 1);
+      chartMount.innerHTML = `
+        <div class="rev-chart" role="img" aria-label="Monthly revenue bars">
           ${months.map(m => {
-            const pct = ((m.revenue || 0) / maxRevenue * 100).toFixed(1);
+            const rev = Number(m.revenue) || 0;
+            const pct = ((rev / maxRevenue) * 100).toFixed(1);
             const monthLabel = new Date(m.month + '-01').toLocaleString('default', { month: 'short' });
+            const yearBit = m.month ? m.month.slice(0, 4) : '';
+            const title = `₦${rev.toLocaleString()} · ${m.orders || 0} orders`;
             return `
-              <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;">
-                <div style="flex:1;width:100%;display:flex;align-items:flex-end;">
-                  <div style="width:100%;background:linear-gradient(to top,#c9a96e,#e8d5a3);border-radius:6px 6px 0 0;height:${pct}%;min-height:4px;position:relative;transition:height 0.3s;" title="₦${Number(m.revenue||0).toLocaleString()} / ${m.orders||0} orders">
-                    <span style="position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:0.65rem;color:#666;white-space:nowrap;">${m.orders||0} orders</span>
-                  </div>
+              <div class="rev-chart-col">
+                <div class="rev-chart-bar-wrap">
+                  <span class="rev-chart-orders tabular-nums">${m.orders || 0}</span>
+                  <div class="rev-chart-bar" style="height:${pct}%;" title="${escapeHtml(title)}"></div>
                 </div>
-                <span style="font-size:0.7rem;color:#999;margin-top:8px;">${monthLabel}</span>
-                <span style="font-size:0.6rem;color:#aaa;">₦${Number((m.revenue||0)/1000).toFixed(0)}k</span>
+                <span class="rev-chart-month">${monthLabel}</span>
+                <span class="rev-chart-rev tabular-nums">₦${(rev / 1000).toFixed(0)}k</span>
+                <span class="rev-chart-year">${yearBit}</span>
               </div>`;
           }).join('')}
-        </div>
-      </div>`;
+        </div>`;
+      chartPanel.hidden = false;
+    } else {
+      chartPanel.hidden = true;
+    }
+  }
 
-    const existingChart = document.querySelector('.dashboard-chart');
-    if (existingChart) existingChart.remove();
-    const grid = document.querySelector('.dashboard-grid');
-    if (grid) {
-      grid.insertAdjacentHTML('beforeend', chartHTML);
+  const topSection = document.getElementById('dashboardTopSection');
+  const topMount = document.getElementById('dashboardTopProductsMount');
+  if (topSection && topMount) {
+    const top = Array.isArray(data.topProducts) ? data.topProducts : [];
+    if (top.length) {
+      topSection.hidden = false;
+      topMount.innerHTML = top.map(p => {
+        const img = p.images?.[0];
+        return `
+          <div class="top-product-card">
+            <div class="top-product-thumb">${img ? `<img src="${img}" alt="">` : '<i class="fas fa-image" aria-hidden="true"></i>'}</div>
+            <div class="top-product-meta">
+              <span class="top-product-name">${escapeHtml(p.name)}</span>
+              <span class="top-product-stock tabular-nums">Stock · ${p.stock ?? 0}</span>
+            </div>
+          </div>`;
+      }).join('');
+    } else {
+      topSection.hidden = true;
+      topMount.innerHTML = '';
     }
   }
 
@@ -292,13 +322,13 @@ async function loadDashboard() {
   const recent = Array.isArray(data.recentOrders) ? data.recentOrders : [];
   table.innerHTML = recent.map(o => `
     <tr>
-      <td><strong>${o.order_number}</strong></td>
-      <td>${o.customer_name}</td>
-      <td>₦${Number(o.total).toLocaleString()}</td>
-      <td><span class="status-badge status-${o.status}">${o.status}</span></td>
-      <td>${new Date(o.created_at).toLocaleDateString()}</td>
+      <td><strong class="tabular-nums">${escapeHtml(o.order_number)}</strong></td>
+      <td>${escapeHtml(o.customer_name)}</td>
+      <td class="td-numeric tabular-nums">₦${Number(o.total).toLocaleString()}</td>
+      <td><span class="status-badge status-${o.status}">${escapeHtml(o.status)}</span></td>
+      <td class="td-nowrap">${new Date(o.created_at).toLocaleDateString()}</td>
     </tr>
-  `).join('') || '<tr><td colspan="5" style="text-align:center;color:#999;">No orders yet</td></tr>';
+  `).join('') || '<tr><td colspan="5" class="table-empty">No orders yet</td></tr>';
 }
 
 async function loadProducts() {
@@ -316,10 +346,10 @@ async function loadProducts() {
     return `
       <tr>
         <td>${img ? `<img src="${img}" alt="${p.name}">` : '<div style="width:50px;height:50px;background:#f5f5f5;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#ccc;"><i class="fas fa-image"></i></div>'}</td>
-        <td><strong>${p.name}</strong></td>
+        <td><strong>${escapeHtml(p.name)}</strong></td>
         <td>${p.category_name || '—'}</td>
-        <td>${p.sale_price ? `<s style="color:#999;">₦${Number(p.price).toLocaleString()}</s> ₦${Number(p.sale_price).toLocaleString()}` : `₦${Number(p.price).toLocaleString()}`}</td>
-        <td>${p.stock}</td>
+        <td class="td-numeric tabular-nums">${p.sale_price ? `<s class="price-was">₦${Number(p.price).toLocaleString()}</s> ₦${Number(p.sale_price).toLocaleString()}` : `₦${Number(p.price).toLocaleString()}`}</td>
+        <td class="td-numeric tabular-nums">${p.stock}</td>
         <td>${p.featured ? '<i class="fas fa-star" style="color:#c9a96e;"></i>' : '—'}</td>
         <td>
           <div class="action-btns">
@@ -381,7 +411,7 @@ async function loadOrders() {
   const table = document.getElementById('ordersTable');
   if (data.apiError) {
     table.innerHTML =
-      `<tr><td colspan="8" style="text-align:center;color:#c00;padding:24px;">Could not load orders: ${escapeHtml(data.error || 'Error')} (HTTP ${data.httpStatus || '?'}). If this persists, confirm the database is reachable.</td></tr>`;
+      `<tr><td colspan="8" class="table-empty table-empty--error">Could not load orders: ${escapeHtml(data.error || 'Error')} (HTTP ${data.httpStatus || '?'}). If this persists, confirm the database is reachable.</td></tr>`;
     return;
   }
 
@@ -392,33 +422,34 @@ async function loadOrders() {
       o.payment_method === 'pay_on_delivery' || o.payment_method === 'whatsapp');
     const payTag = awaiting
       ? (payOk
-        ? '<div style="font-size:0.7rem;color:#059669;margin-top:4px;">Payment OK to approve</div>'
-        : '<div style="font-size:0.7rem;color:#b45309;margin-top:4px;">Verify payment first</div>')
+        ? '<div class="order-pay-hint order-pay-hint--ok">Payment OK to approve</div>'
+        : '<div class="order-pay-hint order-pay-hint--pending">Verify payment first</div>')
       : '';
     const statusCell = awaiting
       ? `<span class="status-badge status-awaiting_staff">Awaiting staff</span>${payTag}`
-      : `<select class="status-select" onchange="updateOrderStatus(${o.id}, this.value)" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:0.8rem;">
+      : `<select class="status-select" onchange="updateOrderStatus(${o.id}, this.value)">
           <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>Pending</option>
           <option value="processing" ${o.status === 'processing' ? 'selected' : ''}>Processing</option>
           <option value="shipped" ${o.status === 'shipped' ? 'selected' : ''}>Shipped</option>
           <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>Delivered</option>
           <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+          <option value="refunded" ${o.status === 'refunded' ? 'selected' : ''}>Refunded</option>
         </select>`;
     const verifyBtn = awaiting
-      ? `<button type="button" class="action-btn" style="background:#f59e0b;color:#fff;" onclick="verifyOrderPaymentAdmin(${o.id})" title="Mark payment verified"><i class="fas fa-money-check"></i></button>`
+      ? `<button type="button" class="action-btn action-btn--warn" onclick="verifyOrderPaymentAdmin(${o.id})" title="Mark payment verified"><i class="fas fa-money-check"></i></button>`
       : '';
     const confirmBtn = awaiting
-      ? `<button type="button" class="action-btn" style="background:#10b981;color:#fff;" onclick="confirmAwaitingOrder(${o.id})" title="Approve sale (admin — skips payment check)"><i class="fas fa-check"></i></button>`
+      ? `<button type="button" class="action-btn action-btn--success" onclick="confirmAwaitingOrder(${o.id})" title="Approve sale (admin — skips payment check)"><i class="fas fa-check"></i></button>`
       : '';
     return `
     <tr>
-      <td><strong>${o.order_number}</strong></td>
-      <td>${o.customer_name}</td>
-      <td><a href="tel:${o.customer_phone}">${o.customer_phone}</a></td>
-      <td>${o.items?.length || 0} item(s)</td>
-      <td>₦${Number(o.total).toLocaleString()}</td>
+      <td><strong class="tabular-nums">${escapeHtml(o.order_number)}</strong></td>
+      <td>${escapeHtml(o.customer_name)}</td>
+      <td><a href="tel:${escapeHtml(o.customer_phone)}">${escapeHtml(o.customer_phone)}</a></td>
+      <td class="tabular-nums">${o.items?.length || 0} item(s)</td>
+      <td class="td-numeric tabular-nums">₦${Number(o.total).toLocaleString()}</td>
       <td>${statusCell}</td>
-      <td>${new Date(o.created_at).toLocaleDateString()}</td>
+      <td class="td-nowrap">${new Date(o.created_at).toLocaleDateString()}</td>
       <td>
         <div class="action-btns">
           ${verifyBtn}
@@ -429,7 +460,7 @@ async function loadOrders() {
       </td>
     </tr>`;
   }).join('') ||
-    '<tr><td colspan="8" style="text-align:center;color:#999;">No orders match. With staff checkout on, new web orders are <strong>Awaiting staff</strong> — choose <strong>All</strong> or <strong>Awaiting staff</strong>, or use <strong>Find order #</strong> above.</td></tr>';
+    '<tr><td colspan="8" class="table-empty">No orders match. With staff checkout on, new web orders are <strong>Awaiting staff</strong> — choose <strong>All</strong> or <strong>Awaiting staff</strong>, or use <strong>Find order #</strong> above.</td></tr>';
 }
 
 async function verifyOrderPaymentAdmin(id) {
@@ -484,11 +515,14 @@ async function loadSalesStaff() {
   const data = await apiCall('/sales-staff');
   if (!data) return;
   const table = document.getElementById('salesStaffTable');
+  const accessLabel = (r) =>
+    (r === 'supervisor' ? 'Supervisor' : 'Staff');
   table.innerHTML = data.staff?.map(s => `
     <tr>
       <td><code style="font-size:0.75rem;">${escapeHtml(s.staff_code || '—')}</code></td>
       <td><strong>${escapeHtml(s.name)}</strong></td>
       <td>${escapeHtml(s.job_title || '—')}</td>
+      <td>${accessLabel(s.staff_role)}</td>
       <td>${s.phone ? `<a href="tel:${escapeHtml(s.phone)}">${escapeHtml(s.phone)}</a>` : '—'}</td>
       <td>${s.email ? escapeHtml(s.email) : '—'}</td>
       <td>${s.active ? '<span class="status-badge status-delivered">Yes</span>' : '<span class="status-badge status-cancelled">No</span>'}</td>
@@ -500,7 +534,7 @@ async function loadSalesStaff() {
         </div>
       </td>
     </tr>
-  `).join('') || '<tr><td colspan="8" style="text-align:center;color:#999;">No staff yet</td></tr>';
+  `).join('') || '<tr><td colspan="9" class="table-empty">No staff yet</td></tr>';
 }
 
 function escapeHtml(str) {
@@ -530,6 +564,11 @@ function openStaffModal(staff) {
   document.getElementById('staffPinHint').style.display = staff ? 'block' : 'none';
   document.getElementById('staffActiveWrap').style.display = staff ? 'block' : 'none';
   document.getElementById('staffActive').checked = staff ? !!staff.active : true;
+  const roleSel = document.getElementById('staffAccessRole');
+  if (roleSel) {
+    const r = (staff?.staff_role || 'staff').toLowerCase() === 'supervisor' ? 'supervisor' : 'staff';
+    roleSel.value = r;
+  }
   modal.classList.add('active');
 }
 
@@ -545,6 +584,7 @@ async function handleSaveStaff(e) {
   const active = document.getElementById('staffActive').checked;
   const profile = {
     job_title: document.getElementById('staffJobTitle').value.trim(),
+    staff_role: document.getElementById('staffAccessRole')?.value || 'staff',
     phone: document.getElementById('staffPhone').value.trim(),
     email: document.getElementById('staffEmail').value.trim(),
     photo_url: document.getElementById('staffPhotoUrl').value.trim(),
@@ -976,7 +1016,13 @@ async function deleteCategory(id) {
 
 // Orders
 async function updateOrderStatus(id, status) {
-  await apiCall(`/orders/${id}`, { method: 'PUT', body: JSON.stringify({ status }) });
+  const body = { status };
+  if (status === 'cancelled') {
+    const reason = window.prompt('Cancellation reason (shown in records):', 'Cancelled in admin');
+    if (reason === null) return;
+    body.cancellation_reason = reason.trim() || 'Cancelled in admin';
+  }
+  await apiCall(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(body) });
   loadOrders();
 }
 
@@ -991,8 +1037,18 @@ function viewOrder(order) {
     ? `<p><strong>Discount:</strong> ${escapeHtml(order.discount_code)} (−₦${Number(order.discount_amount || 0).toLocaleString()})</p>`
     : '';
   const staffLine = order.staff_id
-    ? `<p><strong>Staff checkout:</strong> staff ID ${order.staff_id}</p>`
+    ? `<p><strong>Staff checkout ID:</strong> ${order.staff_id}</p>`
     : '';
+  const cancelLine =
+    order.status === 'cancelled' && (order.cancellation_reason || order.cancelled_at)
+      ? `<p><strong>Cancelled:</strong> ${escapeHtml(order.cancellation_reason || '—')} ${
+          order.cancelled_at ? '(' + new Date(order.cancelled_at).toLocaleString() + ')' : ''
+        }</p>`
+      : '';
+  const refundLine =
+    order.refund_status && order.refund_status !== 'none'
+      ? `<p><strong>Refund:</strong> ${escapeHtml(order.refund_status)} — ₦${Number(order.refunded_amount || 0).toLocaleString()}</p>`
+      : '';
   const payRef = order.payment_ref || order.payment_reference;
   const payRefLine = payRef ? `<p><strong>Payment ref:</strong> <code>${escapeHtml(String(payRef))}</code></p>` : '';
   let payVerifiedLine = '';
@@ -1021,7 +1077,9 @@ function viewOrder(order) {
       ${payVerifiedLine}
       ${discLine}
       ${staffLine}
-      ${order.notes ? `<p><strong>Notes:</strong> ${order.notes}</p>` : ''}
+      ${cancelLine}
+      ${refundLine}
+      ${order.notes ? `<p><strong>Notes:</strong> ${escapeHtml(order.notes)}</p>` : ''}
     </div>
     <div style="margin-bottom:20px;">
       <h4 style="margin-bottom:8px;">Items</h4>

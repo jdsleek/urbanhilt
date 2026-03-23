@@ -101,24 +101,24 @@ async function seedDatabase() {
   console.log('  ✓ Reviews seeded');
 
   const staffPins = [
-    { name: 'Sales Floor', pin: '8888', job_title: 'Sales associate', staff_code: 'UH-S01', phone: '' },
-    { name: 'Store Manager', pin: '9999', job_title: 'Store lead', staff_code: 'UH-M01', phone: '' },
+    { name: 'Sales Floor', pin: '8888', job_title: 'Sales associate', staff_code: 'UH-S01', phone: '', staff_role: 'staff' },
+    { name: 'Store Manager', pin: '9999', job_title: 'Store lead', staff_code: 'UH-M01', phone: '', staff_role: 'supervisor' },
   ];
   for (const s of staffPins) {
     const { rows: ex } = await query('SELECT id FROM sales_staff WHERE name = $1', [s.name]);
     if (!ex.length) {
       await query(
-        `INSERT INTO sales_staff (name, pin_hash, job_title, staff_code, phone) VALUES ($1, $2, $3, $4, $5)`,
-        [s.name, bcrypt.hashSync(s.pin, 10), s.job_title, s.staff_code, s.phone || null]
+        `INSERT INTO sales_staff (name, pin_hash, job_title, staff_code, phone, staff_role) VALUES ($1, $2, $3, $4, $5, $6)`,
+        [s.name, bcrypt.hashSync(s.pin, 10), s.job_title, s.staff_code, s.phone || null, s.staff_role || 'staff']
       );
     } else {
       await query(
-        `UPDATE sales_staff SET job_title = COALESCE(job_title, $1), staff_code = COALESCE(staff_code, $2) WHERE name = $3`,
-        [s.job_title, s.staff_code, s.name]
+        `UPDATE sales_staff SET job_title = COALESCE(job_title, $1), staff_code = COALESCE(staff_code, $2), staff_role = COALESCE(staff_role, $4) WHERE name = $3`,
+        [s.job_title, s.staff_code, s.name, s.staff_role || 'staff']
       );
     }
   }
-  console.log('  ✓ Sales staff profiles + PINs (8888 / 9999) — edit in Admin → Sales staff');
+  console.log('  ✓ Sales staff (8888=staff, 9999=supervisor) — edit in Admin → Sales staff');
 
   const discounts = [
     ['URBANHILT10', '10% off your order', 'percent', 10, 10000, 50000],
