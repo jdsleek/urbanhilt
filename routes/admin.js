@@ -11,6 +11,7 @@ const { finalizeAwaitingOrder } = require('../lib/orderFinalize');
 const { parseJsonSafe } = require('../lib/parseJsonSafe');
 const { restoreStockFromOrderItems, orderHadStockDeducted } = require('../lib/stockAdjust');
 const { normalizeStaffRole } = require('../lib/staffRoles');
+const { getUploadsDir } = require('../lib/uploadsDir');
 
 function slugifyProductName(name) {
   return (
@@ -35,7 +36,7 @@ async function allocateUniqueProductSlug(name) {
 }
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'uploads')),
+  destination: (req, file, cb) => cb(null, getUploadsDir()),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(null, `${uuidv4()}${ext}`);

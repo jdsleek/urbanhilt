@@ -6,6 +6,14 @@ const UH = {
   API: '/api',
   WHATSAPP: '2348146747883',
   CURRENCY: '₦',
+  /** Shown when a product image URL 404s (e.g. lost uploads on redeploy). */
+  PRODUCT_PLACEHOLDER_IMG: '/assets/product-placeholder.svg',
+
+  /** Use on product `<img>` tags: `... ${UH.productImageFallbackAttr()}`. */
+  productImageFallbackAttr() {
+    const p = this.PRODUCT_PLACEHOLDER_IMG.replace(/'/g, "\\'");
+    return `onerror="this.onerror=null;this.src='${p}'"`;
+  },
 
   formatPrice(amount) {
     return this.CURRENCY + Number(amount).toLocaleString('en-NG');
@@ -187,7 +195,7 @@ const UH = {
   productCardHTML(product) {
     const img = product.images?.[0];
     const imgHTML = img
-      ? `<img src="${img}" alt="${product.name}" loading="lazy">`
+      ? `<img src="${img}" alt="${product.name}" loading="lazy" ${this.productImageFallbackAttr()}>`
       : `<div class="placeholder-icon"><i class="fas fa-tshirt"></i></div>`;
 
     let badges = '';
@@ -321,7 +329,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const img = p.images?.[0] || '';
             return `
               <a href="/product.html?slug=${p.slug}" class="search-result-item">
-                ${img ? `<img src="${img}" alt="${p.name}">` : '<div style="width:60px;height:60px;background:#333;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#666"><i class="fas fa-tshirt"></i></div>'}
+                ${img ? `<img src="${img}" alt="${p.name}" ${UH.productImageFallbackAttr()}>` : '<div style="width:60px;height:60px;background:#333;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#666"><i class="fas fa-tshirt"></i></div>'}
                 <div class="search-result-info">
                   <h4>${p.name}</h4>
                   <p>${UH.formatPrice(p.sale_price || p.price)}</p>

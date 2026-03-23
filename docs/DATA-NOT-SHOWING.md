@@ -36,6 +36,19 @@ Rows can exist in Postgres but **image URLs** point to `/uploads/...` on **disk*
 
 **Fix:** Re-upload images in Admin, or copy `uploads/` from the old host, or migrate with **`--rewrite-uploads-base`** (see **`docs/MIGRATE-DB.md`**) so images load from the old public URL until files are copied.
 
+### Persistent uploads (Railway) — stop losing files on every deploy
+
+By default the app stores files under **`uploads/`** next to the code. On Railway that filesystem is **wiped when the service redeploys**; the database still has `/uploads/xyz.jpg` paths but the files are gone → **404** for those URLs.
+
+**Low-risk production setup (no code behavior change beyond where files live):**
+
+1. In Railway: **Volumes** → add a volume to your **web** service, mount path e.g. **`/data/uploads`**.
+2. Set env var **`UPLOADS_DIR=/data/uploads`** on that service (must match the mount path).
+3. Redeploy. New admin uploads go to the volume and **survive** redeploys.
+4. **Already-lost files** are not recoverable from the app; re-upload in Admin or restore files from a backup into the volume under the same filenames as in the DB.
+
+The storefront still requests **`/uploads/...`**; only the server’s disk path is configurable via **`UPLOADS_DIR`**.
+
 ## 3. Orders “missing” in Admin
 
 - Set the filter to **All** (not only **Pending** or **Awaiting staff**).

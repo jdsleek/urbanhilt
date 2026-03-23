@@ -30,7 +30,7 @@ function renderCart() {
 
   cartItems.innerHTML = cart.map(item => {
     const imgHTML = item.image
-      ? `<img src="${item.image}" alt="${item.name}">`
+      ? `<img src="${item.image}" alt="${item.name}" ${UH.productImageFallbackAttr()}>`
       : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#ccc;"><i class="fas fa-tshirt" style="font-size:1.5rem;"></i></div>`;
 
     const meta = [item.size, item.color].filter(Boolean).join(' / ');

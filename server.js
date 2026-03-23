@@ -1,12 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const fs = require('fs');
 const { initDatabase, query } = require('./db/database');
 const { seedDatabase } = require('./db/seed');
 const apiRoutes = require('./routes/api');
 const adminRoutes = require('./routes/admin');
 const staffRoutes = require('./routes/staff');
+const { getUploadsDir, ensureUploadsDir } = require('./lib/uploadsDir');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -65,8 +65,9 @@ app.get('/api/store-config', (req, res) => {
   }
 });
 
+ensureUploadsDir();
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(getUploadsDir()));
 
 // Mount admin API before /api so POST /api/admin/login is never swallowed by the public API router
 app.use('/api/admin', adminRoutes);
@@ -91,11 +92,6 @@ app.get('*', (req, res, next) => {
     }
   });
 });
-
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
 
 (async () => {
   try {

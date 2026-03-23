@@ -145,13 +145,18 @@ function setupGallery(images) {
     return;
   }
 
+  mainImg.style.display = '';
+  mainImg.onerror = function onMainImgErr() {
+    this.onerror = null;
+    this.src = UH.PRODUCT_PLACEHOLDER_IMG;
+  };
   mainImg.src = images[0];
   mainImg.alt = currentProduct.name;
 
   if (images.length > 1) {
     thumbs.innerHTML = images.map((img, i) => `
       <div class="gallery-thumb ${i === 0 ? 'active' : ''}" data-index="${i}">
-        <img src="${img}" alt="Thumbnail ${i + 1}">
+        <img src="${img}" alt="Thumbnail ${i + 1}" ${UH.productImageFallbackAttr()}>
       </div>
     `).join('');
 
@@ -178,7 +183,14 @@ function updateMainImage() {
   const images = currentProduct.images;
   const galleryMain = document.querySelector('.gallery-main');
   if (galleryMain) galleryMain.classList.remove('zoomed');
-  document.getElementById('mainImage').src = images[currentImageIndex];
+  const main = document.getElementById('mainImage');
+  if (main) {
+    main.onerror = function onMainImgErr() {
+      this.onerror = null;
+      this.src = UH.PRODUCT_PLACEHOLDER_IMG;
+    };
+    main.src = images[currentImageIndex];
+  }
   document.querySelectorAll('.gallery-thumb').forEach((t, i) => {
     t.classList.toggle('active', i === currentImageIndex);
   });

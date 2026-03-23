@@ -42,7 +42,7 @@ async function loadCategories() {
       const name = escAttr(cat.name);
       const img = cat.image && String(cat.image).trim();
       const bgInner = img
-        ? `<img class="category-card-img" src="${escAttr(img)}" alt="" loading="lazy" width="600" height="400">`
+        ? `<img class="category-card-img" src="${escAttr(img)}" alt="" loading="lazy" width="600" height="400" ${UH.productImageFallbackAttr()}>`
         : `<i class="fas ${icons[i % icons.length]}"></i>`;
       const count = Number(cat.product_count) || 0;
       const q = encodeURIComponent(cat.slug || '');

@@ -46,7 +46,7 @@ async function loadWishlist() {
     grid.innerHTML = products.map(product => {
       const img = product.images?.[0];
       const imgHTML = img
-        ? `<img src="${img}" alt="${product.name}" loading="lazy">`
+        ? `<img src="${img}" alt="${product.name}" loading="lazy" ${UH.productImageFallbackAttr()}>`
         : `<div class="placeholder-icon"><i class="fas fa-tshirt"></i></div>`;
 
       let badges = '';

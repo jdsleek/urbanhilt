@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const price = p.sale_price || p.price;
         return `
           <div class="pos-card" data-id="${p.id}">
-            ${img ? `<img src="${img}" alt="">` : '<div style="height:140px;background:#222"></div>'}
+            ${img ? `<img src="${img}" alt="" ${UH.productImageFallbackAttr()}>` : '<div style="height:140px;background:#222"></div>'}
             <div class="pos-card-body">
               <h4>${p.name}</h4>
               <div class="price">${UH.formatPrice(price)}</div>

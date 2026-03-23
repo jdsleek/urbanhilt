@@ -53,7 +53,7 @@ function renderCheckoutSidebar() {
 
   container.innerHTML = cart.map(item => {
     const imgHTML = item.image
-      ? `<img src="${item.image}" alt="${item.name}">`
+      ? `<img src="${item.image}" alt="${item.name}" ${UH.productImageFallbackAttr()}>`
       : `<div style="width:60px;height:60px;background:#f5f5f5;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#ccc;"><i class="fas fa-tshirt"></i></div>`;
 
     return `
@@ -326,7 +326,7 @@ function renderReview() {
 
   reviewItems.innerHTML = cart.map(item => `
     <div class="checkout-item">
-      ${item.image ? `<img src="${item.image}" alt="${item.name}">` : ''}
+      ${item.image ? `<img src="${item.image}" alt="${item.name}" ${UH.productImageFallbackAttr()}>` : ''}
       <div class="checkout-item-info">
         <h4>${item.name}</h4>
         <p>${[item.size, item.color].filter(Boolean).join(' / ')} × ${item.qty}</p>
