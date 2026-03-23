@@ -18,7 +18,8 @@
     "railway:tcp-postgres": "node scripts/railway-tcp-postgres.js",
     "railway:sync-git-deploy": "node scripts/railway-sync-git-deploy.js",
     "railway:setup-uploads-volume": "node scripts/railway-setup-uploads-volume.js",
-    "audit:images": "node scripts/audit-product-images.js"
+    "audit:images": "node scripts/audit-product-images.js",
+    "query:image-storage": "node scripts/query-image-storage.js"
   },
   "keywords": [
     "ecommerce",
