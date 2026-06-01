@@ -126,9 +126,11 @@ app.listen(PORT, '0.0.0.0', () => {
       await initDatabase();
 
       const { rows } = await query('SELECT COUNT(*) as count FROM products');
-      if (parseInt(rows[0].count) === 0) {
+      if (parseInt(rows[0].count) === 0 && process.env.AUTO_SEED_EMPTY_DB === 'true') {
         console.log('  → Empty database detected, auto-seeding...');
         await seedDatabase();
+      } else if (parseInt(rows[0].count) === 0) {
+        console.warn('  ⚠ Empty database detected; auto-seed disabled. Set AUTO_SEED_EMPTY_DB=true to seed intentionally.');
       }
       dbReady = true;
     } catch (err) {
