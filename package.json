@@ -19,7 +19,9 @@
     "railway:sync-git-deploy": "node scripts/railway-sync-git-deploy.js",
     "railway:setup-uploads-volume": "node scripts/railway-setup-uploads-volume.js",
     "audit:images": "node scripts/audit-product-images.js",
-    "query:image-storage": "node scripts/query-image-storage.js"
+    "query:image-storage": "node scripts/query-image-storage.js",
+    "backup:audit": "node scripts/railway-backup-audit.js",
+    "backup:catalog": "node scripts/export-catalog-backup.js"
   },
   "keywords": [
     "ecommerce",

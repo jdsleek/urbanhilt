@@ -3,6 +3,7 @@ db/*.db
 db/*.db-shm
 db/*.db-wal
 uploads/
+backups/
 .env
 .env.railway
 .DS_Store
