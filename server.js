@@ -11,6 +11,8 @@ const { uploadsRedirectIfMissingLocally } = require('./lib/uploadsFallback');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+let dbReady = false;
+let dbStartupError = null;
 
 process.on('unhandledRejection', (reason, p) => {
   console.error('  ✗ Unhandled Rejection at:', p, 'reason:', reason);
@@ -47,6 +49,15 @@ app.use((req, res, next) => {
 });
 
 // Register before static + /api router so production always exposes config (avoids 404 if router order/cache differs)
+app.get('/api/health', (req, res) => {
+  res.status(dbStartupError ? 503 : 200).json({
+    ok: !dbStartupError,
+    dbReady,
+    uploadsDir: getUploadsDir(),
+    error: dbStartupError ? dbStartupError.message || 'Database startup failed' : null,
+  });
+});
+
 app.get('/api/store-config', (req, res) => {
   try {
     const siteUrl = (process.env.PUBLIC_SITE_URL || '').replace(/\/$/, '');
@@ -66,7 +77,9 @@ app.get('/api/store-config', (req, res) => {
   }
 });
 
+console.log('  → Preparing uploads directory...');
 ensureUploadsDir();
+console.log(`  ✓ Uploads directory ready: ${getUploadsDir()}`);
 app.use(express.static(path.join(__dirname, 'public')));
 // If file is missing locally but PUBLIC_UPLOADS_FALLBACK_BASE is set, 302 to that origin (recover overnight uploads from old deploy).
 app.use('/uploads', uploadsRedirectIfMissingLocally());
@@ -100,26 +113,28 @@ app.get('*', (req, res, next) => {
   });
 });
 
-(async () => {
-  try {
-    await initDatabase();
+// 0.0.0.0 required on Railway/Docker so the platform proxy can reach the process.
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n  ╔══════════════════════════════════════════╗`);
+  console.log(`  ║     URBAN HILT - Luxury Redefined        ║`);
+  console.log(`  ║     Server running on port ${PORT}            ║`);
+  console.log(`  ╚══════════════════════════════════════════╝\n`);
 
-    const { rows } = await query('SELECT COUNT(*) as count FROM products');
-    if (parseInt(rows[0].count) === 0) {
-      console.log('  → Empty database detected, auto-seeding...');
-      await seedDatabase();
+  (async () => {
+    try {
+      console.log('  → Initializing database...');
+      await initDatabase();
+
+      const { rows } = await query('SELECT COUNT(*) as count FROM products');
+      if (parseInt(rows[0].count) === 0) {
+        console.log('  → Empty database detected, auto-seeding...');
+        await seedDatabase();
+      }
+      dbReady = true;
+    } catch (err) {
+      dbStartupError = err;
+      console.error('  ✗ Database startup failed:', err.message || err);
+      console.error(err.stack || err);
     }
-
-    // 0.0.0.0 required on Railway/Docker so the platform proxy can reach the process
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`\n  ╔══════════════════════════════════════════╗`);
-      console.log(`  ║     URBAN HILT - Luxury Redefined        ║`);
-      console.log(`  ║     Server running on port ${PORT}            ║`);
-      console.log(`  ╚══════════════════════════════════════════╝\n`);
-    });
-  } catch (err) {
-    console.error('  ✗ Failed to start:', err.message || err);
-    console.error(err.stack || err);
-    process.exit(1);
-  }
-})();
+  })();
+});

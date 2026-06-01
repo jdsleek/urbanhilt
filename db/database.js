@@ -160,7 +160,7 @@ async function initDatabase() {
       active INTEGER DEFAULT 1,
       created_at TIMESTAMP DEFAULT NOW()
     );
-  `).catch((e) => console.error('  ✗ DB init (core tables):', e.message || e));
+  `);
 
   await pool
     .query(`
